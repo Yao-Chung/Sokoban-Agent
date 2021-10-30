@@ -2,10 +2,9 @@
 
 Solver::Solver(const std::string level):
     level(level)
-{
-    
+{ 
 }
 
 bool Solver::solve(){
-
+    return true; // TODO:
 }

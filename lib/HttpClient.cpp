@@ -1,14 +1,9 @@
 #include <HttpClient.hpp>
+
 #include <sys/types.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
-#include <cstdio>
-#include <cstdlib>
 #include <unistd.h>
-#include <errno.h>
 #include <string.h>
-#include <iostream>
 
 #define MAXDATASIZE 1024
 
@@ -78,4 +73,20 @@ std::string HttpClient::send_request(std::string url){
     // close socket
     close(sockfd);
     return all_content;
+}
+
+std::pair<bool, std::vector<std::string>> HttpClient::move(int direction){
+
+}
+std::vector<std::string> HttpClient::restart(){
+
+}
+std::vector<std::string> HttpClient::start(std::string level){
+    std::string body = send_request(std::string("/start?level=") + level);
+    // Trim begin & end
+    body = body.substr(1, body.size() - 2);
+    // Split row
+    std::vector<std::string> rows;
+    
+    return rows;
 }
