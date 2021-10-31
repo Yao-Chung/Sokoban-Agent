@@ -84,9 +84,27 @@ std::vector<std::string> HttpClient::restart(){
 std::vector<std::string> HttpClient::start(std::string level){
     std::string body = send_request(std::string("/start?level=") + level);
     // Trim begin & end
-    body = body.substr(1, body.size() - 2);
+    body = body.substr(2, body.size() - 4);
     // Split row
     std::vector<std::string> rows;
-    
+    std::string row;
+    for(size_t pos = body.find("],["); pos != std::string::npos; pos = body.find("],[")){
+        std::string trimmed = body.substr(0, pos);
+        for(size_t comma = trimmed.find(","); comma != std::string::npos; comma = trimmed.find(",")){
+            row += trimmed.substr(0, comma).substr(1, 1);
+            trimmed = trimmed.substr(comma + 1);
+        }
+        row += trimmed.substr(1, 1);
+        rows.emplace_back(row);
+        row = std::string();
+        body = body.substr(pos + 3);
+    }
+    // Remaining
+    for(size_t comma = body.find(","); comma != std::string::npos; comma = body.find(",")){
+        row += body.substr(0, comma).substr(1, 1);
+        body = body.substr(comma + 1);
+    }
+    row += body.substr(1, 1);
+    rows.emplace_back(row);
     return rows;
 }
