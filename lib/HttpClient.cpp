@@ -58,8 +58,10 @@ std::string HttpClient::send_request(std::string url){
             std::string content_length = remain.substr(0, remain.find("\r"));
             body_size = std::stol(content_length);
             // Get cookie
-            remain = all_content.substr(all_content.find("Set-cookie: ")+12);
-            cookie = remain.substr(0, remain.find("\r"));
+            if(all_content.find("Set-cookie: ") != std::string::npos){
+                remain = all_content.substr(all_content.find("Set-cookie: ")+12);
+                cookie = remain.substr(0, remain.find("\r"));
+            }
             //Get body
             all_content = all_content.substr(index+4);
             recv_str = std::string(MAXDATASIZE, '\0');
@@ -84,7 +86,7 @@ std::string HttpClient::send_request(std::string url){
 }
 
 std::pair<bool, std::vector<std::string>> HttpClient::move(int direction){
-    
+
 }
 std::vector<std::string> HttpClient::restart(){
 
