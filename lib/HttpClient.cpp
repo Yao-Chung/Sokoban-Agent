@@ -53,7 +53,7 @@ std::string HttpClient::send_request(std::string url){
             std::string remain = all_content.substr(all_content.find("Content-length: ")+16);
             std::string content_length = remain.substr(0, remain.find("\r"));
             body_size = std::stol(content_length);
-            //Get cookie
+            // Get cookie
             remain = all_content.substr(all_content.find("Set-cookie: ")+12);
             cookie = remain.substr(0, remain.find("\r"));
             //Get body
@@ -91,6 +91,5 @@ std::vector<std::string> HttpClient::start(std::string level){
     body = body.substr(1, body.size() - 2);
     // Split row
     std::vector<std::string> rows;
-    
     return rows;
 }
