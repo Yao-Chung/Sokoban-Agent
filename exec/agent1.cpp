@@ -10,5 +10,9 @@ int main(int argc, char const *argv[])
     for(std::string row : map){
         std::cout << row << std::endl;
     }
+    client.restart();
+    for(std::string row : map){
+        std::cout << row << std::endl;
+    }
     return 0;
 }
