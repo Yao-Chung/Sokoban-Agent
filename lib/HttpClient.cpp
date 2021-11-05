@@ -40,7 +40,7 @@ std::string HttpClient::send_request(std::string url){
         //TODO: exception handle
     }
     // receive message
-    std::string recv_str(1024, '\0');
+    std::string recv_str(MAXDATASIZE, '\0');
     std::string all_content("");
     ssize_t recv_size;
     size_t body_size = 0;
@@ -53,11 +53,15 @@ std::string HttpClient::send_request(std::string url){
             std::string remain = all_content.substr(all_content.find("Content-length: ")+16);
             std::string content_length = remain.substr(0, remain.find("\r"));
             body_size = std::stol(content_length);
+            // Get cookie
+            remain = all_content.substr(all_content.find("Set-cookie: ")+12);
+            cookie = remain.substr(0, remain.find("\r"));
+            //Get body
             all_content = all_content.substr(index+4);
-            recv_str = std::string(1024, '\0');
+            recv_str = std::string(MAXDATASIZE, '\0');
             break;
         }
-        recv_str = std::string(1024, '\0');
+        recv_str = std::string(MAXDATASIZE, '\0');
     }
     if(recv_size == -1){
         //TODO: exception handle
@@ -68,7 +72,7 @@ std::string HttpClient::send_request(std::string url){
             //TODO: exception handle
         }
         all_content += recv_str.substr(0, recv_size);
-        recv_str = std::string(1024, '\0');
+        recv_str = std::string(MAXDATASIZE, '\0');
     }
     // close socket
     close(sockfd);
