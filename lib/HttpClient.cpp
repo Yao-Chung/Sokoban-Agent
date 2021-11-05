@@ -35,12 +35,10 @@ std::string HttpClient::send_request(std::string url){
     // send GET request
     std::string msg("GET ");
     msg += (url + " HTTP/1.1\r\n");
-    if(cookie == ""){
-        msg += "\r\n";
+    if(cookie != ""){
+        msg = msg + "Cookie: " + cookie + "\r\n";
     }
-    else{
-        msg = msg + "Cookie: " + cookie + "\r\n\r\n";
-    }
+    msg += "\r\n";
     if (send(sockfd, msg.c_str(), msg.size(), 0) == -1) 
     {
         //TODO: exception handle
@@ -86,7 +84,7 @@ std::string HttpClient::send_request(std::string url){
 }
 
 std::pair<bool, std::vector<std::string>> HttpClient::move(int direction){
-
+    
 }
 std::vector<std::string> HttpClient::restart(){
 
