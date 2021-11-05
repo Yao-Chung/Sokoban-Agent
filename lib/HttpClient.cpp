@@ -22,6 +22,41 @@ HttpClient::HttpClient(std::string hostname, std::string port){
 HttpClient::~HttpClient(){
     freeaddrinfo(servinfo);
 }
+
+static std::vector<std::string> parseMap(std::string body){
+    body = body.substr(2, body.size() - 4);
+    std::vector<std::string> rows;
+    std::string row;
+    for(size_t pos = body.find("],["); pos != std::string::npos; pos = body.find("],[")){
+        std::string trimmed = body.substr(0, pos);
+        for(size_t comma = trimmed.find(","); comma != std::string::npos; comma = trimmed.find(",")){
+            std::string elem = trimmed.substr(0, comma);
+            if(elem == "null"){
+                row += " ";
+            }else{
+                row += elem.substr(1, 1);
+            }
+            trimmed = trimmed.substr(comma + 1);
+        }
+        if(trimmed == "null"){
+            row += " ";
+        }else{
+            row += trimmed.substr(1, 1);
+        }
+        rows.emplace_back(row);
+        row = std::string();
+        body = body.substr(pos + 3);
+    }
+    // Remaining
+    for(size_t comma = body.find(","); comma != std::string::npos; comma = body.find(",")){
+        row += body.substr(0, comma).substr(1, 1);
+        body = body.substr(comma + 1);
+    }
+    row += body.substr(1, 1);
+    rows.emplace_back(row);
+    return rows;
+}
+
 std::string HttpClient::send_request(std::string url){
     // open socket
     int sockfd;
@@ -48,7 +83,7 @@ std::string HttpClient::send_request(std::string url){
     std::string all_content("");
     ssize_t recv_size;
     size_t body_size = 0;
-    while((recv_size = recv(sockfd, recv_str.data(), recv_str.size(), 0)) > 0){
+    while((recv_size = recv(sockfd, (void*)recv_str.data(), recv_str.size(), 0)) > 0){
         all_content += recv_str.substr(0, recv_size);
         // find the empty line
         size_t index;
@@ -74,7 +109,7 @@ std::string HttpClient::send_request(std::string url){
     }
     // Get the whole body
     while(all_content.size() < body_size){
-        if((recv_size = recv(sockfd, recv_str.data(), recv_str.size(), 0)) == -1){
+        if((recv_size = recv(sockfd, (void*)recv_str.data(), recv_str.size(), 0)) == -1){
             //TODO: exception handle
         }
         all_content += recv_str.substr(0, recv_size);
@@ -84,18 +119,37 @@ std::string HttpClient::send_request(std::string url){
     close(sockfd);
     return all_content;
 }
-
-std::pair<bool, std::vector<std::string>> HttpClient::move(int direction){
-
-}
-std::vector<std::string> HttpClient::restart(){
-
-}
-std::vector<std::string> HttpClient::start(std::string level){
-    std::string body = send_request(std::string("/start?level=") + level);
+std::pair<bool, std::vector<std::string>> HttpClient::move(MoveDirection direction){
+    // Get URL
+    std::string url("/move?direction=");
+    switch (direction){
+        case MoveDirection::Left:
+            url += "0";
+            break;
+        case MoveDirection::Right:
+            url += "1";
+            break;
+        case MoveDirection::Up:
+            url += "2";
+            break;
+        case MoveDirection::Down:
+            url += "3";
+            break;
+    }
+    // Request
+    std::string body = send_request(url);
     // Trim begin & end
     body = body.substr(1, body.size() - 2);
-    // Split row
-    std::vector<std::string> rows;
-    return rows;
+    // Parse win
+    std::string winStr = body.substr(body.find("\"win\": ") + 7);
+    winStr = winStr.substr(0, winStr.find(","));
+    // Parse map
+    std::vector<std::string> map = parseMap(body.substr(body.find("\"map\": ") + 7));
+    return {(winStr == "true"), map};
+}
+std::vector<std::string> HttpClient::restart(){
+    return parseMap(send_request("/restart"));
+}
+std::vector<std::string> HttpClient::start(std::string level){
+    return parseMap(send_request(std::string("/start?level=") + level));
 }
