@@ -10,6 +10,7 @@ int main(int argc, char const *argv[])
     for(std::string row : map){
         std::cout << row << std::endl;
     }
+    auto moveResult = client.move(MoveDirection::Down);
     client.restart();
     for(std::string row : map){
         std::cout << row << std::endl;
