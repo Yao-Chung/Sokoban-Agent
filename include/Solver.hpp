@@ -11,9 +11,10 @@ public:
     virtual std::vector<MoveDirection> solve() = 0;
 protected:
     Map getMap();
-    static Map move(const Map& map, const MoveDirection direction);
+    Map move(const Map& map, const MoveDirection direction);
+    bool isWin(const Map& map);
 private:
-    const Map map;
+    const Map _map;
 };
 
 #endif
