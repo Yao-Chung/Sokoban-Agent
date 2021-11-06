@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <Action.hpp>
+#include <defines.hpp>
 
 class State{
 public:
@@ -12,6 +13,7 @@ public:
     unsigned int finishTargets;
     std::pair<int, int> manPosition;
     std::vector< std::pair<int, int> > boxPosition;
+    State(unsigned int distance, Map gameMap);
 };
 
 #endif
