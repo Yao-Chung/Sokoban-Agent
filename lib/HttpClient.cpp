@@ -23,7 +23,7 @@ HttpClient::~HttpClient(){
     freeaddrinfo(servinfo);
 }
 
-static std::vector<std::string> parseMap(std::string body){
+static Map parseMap(std::string body){
     body = body.substr(2, body.size() - 4);
     std::vector<std::string> rows;
     std::string row;
@@ -97,7 +97,7 @@ std::string HttpClient::send_request(std::string url){
                 remain = all_content.substr(all_content.find("Set-cookie: ")+12);
                 cookie = remain.substr(0, remain.find("\r"));
             }
-            //Get body
+            // Get body
             all_content = all_content.substr(index+4);
             recv_str = std::string(MAXDATASIZE, '\0');
             break;
@@ -119,7 +119,7 @@ std::string HttpClient::send_request(std::string url){
     close(sockfd);
     return all_content;
 }
-std::pair<bool, std::vector<std::string>> HttpClient::move(MoveDirection direction){
+std::pair<bool, Map> HttpClient::move(MoveDirection direction){
     // Get URL
     std::string url("/move?direction=");
     switch (direction){
@@ -144,12 +144,12 @@ std::pair<bool, std::vector<std::string>> HttpClient::move(MoveDirection directi
     std::string winStr = body.substr(body.find("\"win\": ") + 7);
     winStr = winStr.substr(0, winStr.find(","));
     // Parse map
-    std::vector<std::string> map = parseMap(body.substr(body.find("\"map\": ") + 7));
+    Map map = parseMap(body.substr(body.find("\"map\": ") + 7));
     return {(winStr == "true"), map};
 }
-std::vector<std::string> HttpClient::restart(){
+Map HttpClient::restart(){
     return parseMap(send_request("/restart"));
 }
-std::vector<std::string> HttpClient::start(std::string level){
+Map HttpClient::start(std::string level){
     return parseMap(send_request(std::string("/start?level=") + level));
 }
