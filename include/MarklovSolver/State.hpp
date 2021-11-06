@@ -2,7 +2,7 @@
 #define SOKOBAN_AGENT_STATE
 
 #include <vector>
-#include <Action.hpp>
+#include <MarklovSolver/Action.hpp>
 #include <defines.hpp>
 
 class State{

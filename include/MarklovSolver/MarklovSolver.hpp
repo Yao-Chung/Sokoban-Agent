@@ -4,8 +4,8 @@
 #include <vector>
 #include <defines.hpp>
 #include <Solver.hpp>
-#include <State.hpp>
-#include <Action.hpp>
+#include <MarklovSolver/State.hpp>
+#include <MarklovSolver/Action.hpp>
 #include <unordered_set>
 
 class MarklovSolver : public Solver{
@@ -14,7 +14,7 @@ public:
     unsigned int beta;
     unsigned int gamma;
     unsigned int iter;
-    unordered_set<State> allStates;
+    std::unordered_set<State> allStates;
 
     std::vector<MoveDirection> solve();
     MarklovSolver(unsigned int alpha, unsigned int beta, unsigned int gamma, unsigned int iter, Map gameMap);

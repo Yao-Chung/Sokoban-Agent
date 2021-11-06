@@ -1,7 +1,7 @@
 #ifndef SOKOBAN_AGENT_ACTION
 #define SOKOBAN_AGENT_ACTION
 
-#include <State.hpp>
+#include <MarklovSolver/State.hpp>
 #include <defines.hpp>
 
 class Action{
