@@ -4,12 +4,12 @@
 #include <vector>
 
 Solver::Solver(const Map map):
-    _map(map)
+    map(map)
 { 
 }
 
 Map Solver::getMap(){
-    return _map;
+    return map;
 }
 
 Map Solver::move(const Map& map, const MoveDirection direction){
@@ -75,8 +75,7 @@ Map Solver::move(const Map& map, const MoveDirection direction){
     }
     // Move man
     result[fwdY][fwdX] = '@';
-    char origin = getMap()[manY][manX];
-    result[manY][manX] = ((origin == '.') || (origin == '%')) ? '.' : ' ';
+    result[manY][manX] = ((Solver::map[manY][manX] == '.') || (Solver::map[manY][manX] == '%')) ? '.' : ' ';
     return result;
 }
 

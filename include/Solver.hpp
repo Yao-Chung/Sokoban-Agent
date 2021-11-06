@@ -14,7 +14,7 @@ protected:
     Map move(const Map& map, const MoveDirection direction);
     bool isWin(const Map& map);
 private:
-    const Map _map;
+    const Map map;
 };
 
 #endif
