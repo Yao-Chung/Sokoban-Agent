@@ -12,5 +12,6 @@ enum class MoveDirection{
 };
 
 using Map = std::vector<std::string>;
+using Position = std::pair<int, int>;
 
 #endif

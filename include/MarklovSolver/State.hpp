@@ -19,13 +19,15 @@ struct State{
     std::vector<Action> actions;
     unsigned int distance;
     unsigned int finishTargets;
-    std::pair<int, int> manPosition;
-    std::vector< std::pair<int, int> > boxPosition;
+    Position manPosition;
+    std::vector<Position> boxPosition;
     std::string key;
 
     State() = default;
     State(unsigned int distance, Map map);
-    static std::string getKey(Map map);
+    static std::string getKey(const Map map);
+    static std::string getKey(const Position manPos, const std::vector<Position> boxPos);
+    static std::pair< Position, std::vector<Position> > getPositions(const Map map);
 };
 
 #endif
