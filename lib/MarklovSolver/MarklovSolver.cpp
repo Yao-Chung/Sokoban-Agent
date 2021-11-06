@@ -1,8 +1,12 @@
 #include <MarklovSolver/MarklovSolver.hpp>
 
-MarklovSolver::MarklovSolver(unsigned int alpha, unsigned int beta, 
-                              unsigned int gamma, unsigned int iter, Map gameMap)
-{
+MarklovSolver::MarklovSolver(
+    unsigned int alpha, 
+    unsigned int beta, 
+    unsigned int gamma,
+    unsigned int iter, 
+    Map map
+): Solver(map){
 
 }
 

@@ -5,8 +5,7 @@
 #include <defines.hpp>
 #include <Solver.hpp>
 #include <MarklovSolver/State.hpp>
-#include <MarklovSolver/Action.hpp>
-#include <unordered_set>
+#include <unordered_map>
 
 class MarklovSolver : public Solver{
 public:
@@ -14,10 +13,10 @@ public:
     unsigned int beta;
     unsigned int gamma;
     unsigned int iter;
-    std::unordered_set<State> allStates;
+    std::unordered_map<std::string, State> allStates;
 
     std::vector<MoveDirection> solve();
-    MarklovSolver(unsigned int alpha, unsigned int beta, unsigned int gamma, unsigned int iter, Map gameMap);
+    MarklovSolver(unsigned int alpha, unsigned int beta, unsigned int gamma, unsigned int iter, Map map);
 private:
     State curState;
     void restart();
