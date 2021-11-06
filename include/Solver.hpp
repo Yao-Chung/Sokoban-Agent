@@ -7,9 +7,13 @@
 
 class Solver{
 public:
-    Map map;
     Solver(const Map map);
     virtual std::vector<MoveDirection> solve() = 0;
+protected:
+    Map getMap();
+    static Map move(const Map& map, const MoveDirection direction);
+private:
+    const Map map;
 };
 
 #endif
