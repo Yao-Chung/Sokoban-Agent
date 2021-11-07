@@ -13,8 +13,8 @@ MarklovSolver::MarklovSolver(
 
 std::vector<MoveDirection> MarklovSolver::solve(){
     // initialize the root state and put into hash map
-    State curState(0, getMap());
-    allStates[curState.key] = curState;
+    State* curState = new State(0, getMap());
+    allStates[curState->key] = curState;
     // walk from root state
     MoveDirection dirs[] = {MoveDirection::Up, MoveDirection::Down, MoveDirection::Left, MoveDirection::Right};
     bool finished = false;
@@ -28,13 +28,17 @@ std::vector<MoveDirection> MarklovSolver::solve(){
                 break;
             }
             // check if newState equals to curState
-            if(curState.key == State::getKey(newMap)){
+            if(curState->key == State::getKey(newMap)){
                 continue;
             }
             // create new state
-            State newState(curState.distance+1, newMap);
-            allStates[newState.key] = newState;
-            // update curState's action
+            State* newState = new State(curState->distance + 1, newMap);
+            allStates[newState->key] = newState;
+            // Create curState's action
+            Action& action = curState->actions.emplace_back();
+            action.parent = curState;
+            action.next = newState;
+            action.direction = dir;
             // curState.actions.push_back();
         }
 
