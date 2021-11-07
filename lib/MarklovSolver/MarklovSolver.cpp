@@ -1,13 +1,13 @@
 #include <MarklovSolver/MarklovSolver.hpp>
 
 MarklovSolver::MarklovSolver(
-    unsigned int alpha, 
-    unsigned int beta, 
-    unsigned int gamma,
-    unsigned int iter, 
+    float alpha,
+    float beta,
+    float gamma,
+    unsigned int iter,
     Map map
-): Solver(map){
-
+): Solver(map), alpha(alpha), beta(beta), gamma(gamma), iter(iter){
+    
 }
 
 std::vector<MoveDirection> MarklovSolver::solve(){

@@ -9,14 +9,14 @@
 
 class MarklovSolver : public Solver{
 public:
-    unsigned int alpha;
-    unsigned int beta;
-    unsigned int gamma;
+    float alpha;
+    float beta;
+    float gamma;
     unsigned int iter;
     std::unordered_map<std::string, State> allStates;
 
     std::vector<MoveDirection> solve();
-    MarklovSolver(unsigned int alpha, unsigned int beta, unsigned int gamma, unsigned int iter, Map map);
+    MarklovSolver(float alpha, float beta, float gamma, unsigned int iter, Map map);
 private:
     State curState;
     void restart();
