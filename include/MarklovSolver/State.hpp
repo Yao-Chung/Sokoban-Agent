@@ -17,6 +17,7 @@ struct Action{
 struct State{
     std::vector<State*> parents;
     std::vector<Action> actions;
+    
     unsigned int distance;
     unsigned int finishTargets;
     Position manPosition;

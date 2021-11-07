@@ -2,8 +2,20 @@
 
 #include <sstream>
 
-State::State(unsigned int distance, Map map){
-
+State::State(unsigned int distance, Map map):
+    distance(distance), finishTargets(0)
+{
+    std::pair< Position, std::vector<Position> > positions(getPositions(map));
+    manPosition = positions.first;
+    boxPosition = positions.second;
+    key = getKey(manPosition, boxPosition);
+    for(std::string row: map){
+        for(char elem: row){
+            if(elem == '%'){
+                finishTargets += 1;
+            }
+        }
+    }
 }
 
 std::string State::getKey(const Map map){
