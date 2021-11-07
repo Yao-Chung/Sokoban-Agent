@@ -13,12 +13,12 @@ public:
     float beta;
     float gamma;
     unsigned int iter;
+    Map map;
     std::unordered_map<std::string, State> allStates;
 
     std::vector<MoveDirection> solve();
     MarklovSolver(float alpha, float beta, float gamma, unsigned int iter, Map map);
 private:
-    State curState;
     void restart();
     void update();
 };
