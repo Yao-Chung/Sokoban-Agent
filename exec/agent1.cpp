@@ -65,10 +65,6 @@ int main(int argc, char const *argv[])
         std::any_cast<unsigned int>(args["iter_delta"]),
         map
     );
-    // Print map
-    for(std::string row: map){
-        std::cout << row << std::endl;
-    }
     solver.attach_Visualizer("output/out", ".dot");
     // Solve
     std::stack<MoveDirection> policy = solver.solve();

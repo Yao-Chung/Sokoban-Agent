@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stack>
 #include <unordered_set>
+#include <iostream>
 
 MarklovSolver::MarklovSolver(
     float alpha,
@@ -23,12 +24,12 @@ std::stack<MoveDirection> MarklovSolver::solve(){
     // initialize the root state and put into hash map
     clean();
     Map map(getMap());
-    State* curState = new State(0, map);
+    State* curState = new State(1, map);
     allStates[curState->key] = curState;
     // walk from root state
     for(unsigned int iteration = 1; ; ++iteration){
         // Visualize
-        visualize(iteration, curState);
+        visualize(iteration, curState, map);
         // create states and actions
         if(curState->actions.empty()){
             bool finished = false;
@@ -61,9 +62,10 @@ std::stack<MoveDirection> MarklovSolver::solve(){
                 action->parent = curState;
                 action->next = nextState;
                 action->direction = dir;
-                action->pathCost = 0;
+                action->pathCost = 1;
+                action->confidence = 0;
                 if(getBoxKey(curState->key) == getBoxKey(nextState->key)) {
-                    action->restartCost = 0;   
+                    action->restartCost = 1;   
                 }else{
                     action->restartCost = curState->distance;
                     totalBoxMoved += 1;
@@ -109,9 +111,9 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         float max_confidence = -1.0f;
         Action *max_action = nullptr;
         for(Action* action: curState->actions){
-            float cur_confidence = (alpha/action->pathCost) +(beta/action->restartCost) + (gamma*curState->finishTargets);
-            if(cur_confidence > max_confidence){
-                max_confidence = cur_confidence;
+            action->confidence = (alpha/(float)action->pathCost) +(beta/(float)action->restartCost) + (gamma*(float)curState->finishTargets);
+            if(action->confidence > max_confidence){
+                max_confidence = action->confidence;
                 max_action = action;
             }
         }
@@ -150,7 +152,11 @@ void MarklovSolver::clean(){
     }
 }
 
-void MarklovSolver::visualize(unsigned int iteration, State* curState){
+void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map& map){
+    // Print map
+    for(std::string row: map){
+        std::cout << row << std::endl;
+    }
     if(visualizer.has_value()){
         // Copy policy to set
         std::stack copied = policy;
@@ -180,7 +186,8 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState){
             for(Action* action: state->actions){
                 visualizer->out << "\tm" << action->parent << " -> m" << action->next << "[label=\""
                     << "P=" << action->pathCost << "\\n"
-                    << "R=" << action->restartCost << "\\n";
+                    << "R=" << action->restartCost << "\\n"
+                    << "Con=" << action->confidence << "\\n";
                 switch (action->direction){
                 case MoveDirection::Up:
                     visualizer->out << "Dir=Up\\n";
@@ -217,14 +224,14 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState){
     }
 }
 
-#define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 1e-6)
+#define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 0.5)
 
 State* MarklovSolver::restart(){
     // Update variables
     float oldAlpha = alpha;
-    alpha = maxIter / policy.top()->pathCost;
-    beta = maxIter / divide_guard(totalBoxMoved);
-    gamma = (maxIter / divide_guard(policy.top()->next->finishTargets)) + (totalBoxMoved/maxIter);
+    alpha = (float)maxIter / (float)policy.top()->pathCost;
+    beta = (float)maxIter / (float)divide_guard(totalBoxMoved);
+    gamma = ((float)maxIter / (float)divide_guard(policy.top()->next->finishTargets)) + ((float)totalBoxMoved/ (float)maxIter);
     if(alpha >= oldAlpha){
         maxIter += deltaIter;
     }

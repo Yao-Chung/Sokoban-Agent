@@ -10,6 +10,7 @@ struct State;
 struct Action{
     unsigned int pathCost;
     unsigned int restartCost;
+    float confidence;
     MoveDirection direction;
     State *parent;
     State *next;

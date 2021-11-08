@@ -28,7 +28,7 @@ public:
     );
 private:
     void clean();
-    void visualize(unsigned int iteration, State* curState);
+    void visualize(unsigned int iteration, State* curState, const Map& map);
     State* restart();
     std::optional<Visualizer> visualizer;
 };
