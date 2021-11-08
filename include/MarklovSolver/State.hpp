@@ -17,7 +17,7 @@ struct Action{
 
 struct State{
     std::unordered_set<State*> parents;
-    std::vector<Action> actions;
+    std::vector<Action*> actions;
 
     unsigned int distance;
     unsigned int finishTargets;

@@ -54,22 +54,58 @@ std::vector<MoveDirection> MarklovSolver::solve(){
                 }
                 State* nextState = allStates[newKey];
                 // Create curState's action
-                Action& action = curState->actions.emplace_back();
-                action.parent = curState;
-                action.next = nextState;
-                action.direction = dir;
-                action.pathCost = 1;
-                action.restartCost = (getBoxKey(curState->key) == getBoxKey(nextState->key)) ? 0 : curState->distance;
+                Action* action = curState->actions.emplace_back(new Action());
+                action->parent = curState;
+                action->next = nextState;
+                action->direction = dir;
+                action->pathCost = 0;
+                action->restartCost = (getBoxKey(curState->key) == getBoxKey(nextState->key)) ? 0 : curState->distance;
             }
             // Unsolved or solved
             if(finished || curState->actions.empty()){
                 break;
             }
         }
-        // Calculate confidence for each action
-        // Decide action
+        // Check if no further action without backward
+        if(curState->actions.size() == 1 && lastDirection.has_value()){
+            bool isBackWard = false;
+            switch (curState->actions[0]->direction){
+            case MoveDirection::Up:
+                isBackWard = (lastDirection == MoveDirection::Down);
+                break;
+            case MoveDirection::Down:
+                isBackWard = (lastDirection == MoveDirection::Up);
+                break;
+            case MoveDirection::Left:
+                isBackWard = (lastDirection == MoveDirection::Right);
+                break;
+            case MoveDirection::Right:
+                isBackWard = (lastDirection == MoveDirection::Left);
+                break;
+            }
+            if(isBackWard){
+                curState = max_action->next;
+                map = move(map, max_action->direction);
+                lastDirection = max_action->direction;
+                continue;
+            }
+        }
+        // Calculate confidence for each action and Decide action
+        float max_confidence = -1.0f;
+        Action *max_action = nullptr;
+        for(Action* action: curState->actions){
+            float cur_confidence = (alpha/action->pathCost) +(beta/action->restartCost) + (gamma*curState->finishTargets);
+            if(cur_confidence > max_confidence){
+                max_confidence = cur_confidence;
+                max_action = action;
+            }
+        }
         // Update map to newMap
+        curState = max_action->next;
+        map = move(map, max_action->direction);
+        lastDirection = max_action->direction;
         // Increase iteration & check iter
+
     }
     return result;
 }
