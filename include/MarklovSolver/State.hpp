@@ -2,6 +2,7 @@
 #define SOKOBAN_AGENT_STATE
 
 #include <vector>
+#include <unordered_set>
 #include <defines.hpp>
 
 struct State;
@@ -15,9 +16,9 @@ struct Action{
 };
 
 struct State{
-    std::vector<State*> parents;
+    std::unordered_set<State*> parents;
     std::vector<Action> actions;
-    
+
     unsigned int distance;
     unsigned int finishTargets;
     Position manPosition;
