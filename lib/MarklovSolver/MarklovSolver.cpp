@@ -24,7 +24,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
     // initialize the root state and put into hash map
     clean();
     Map map(getMap());
-    State* curState = new State(1, map);
+    State* curState = new State(0, map);
     allStates[curState->key] = curState;
     // walk from root state
     for(unsigned int iteration = 1; ; ++iteration){
@@ -65,7 +65,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
                 action->pathCost = 1;
                 action->confidence = 0;
                 if(getBoxKey(curState->key) == getBoxKey(nextState->key)) {
-                    action->restartCost = 1;   
+                    action->restartCost = 0;   
                 }else{
                     action->restartCost = curState->distance;
                     totalBoxMoved += 1;
@@ -111,7 +111,13 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         float max_confidence = -1.0f;
         Action *max_action = nullptr;
         for(Action* action: curState->actions){
-            action->confidence = (alpha/(float)action->pathCost) +(beta/(float)action->restartCost) + (gamma*(float)curState->finishTargets);
+            action->confidence += (alpha/(float)action->pathCost);
+            if(action->restartCost > 0){
+                action->confidence += beta/(float)action->restartCost;
+            }
+            if(curState->finishTargets > 0){
+                action->confidence += gamma*(float)curState->finishTargets;
+            }
             if(action->confidence > max_confidence){
                 max_confidence = action->confidence;
                 max_action = action;
