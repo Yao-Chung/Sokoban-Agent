@@ -18,7 +18,7 @@ static inline std::string getBoxKey(const std::string& key){
 
 std::stack<MoveDirection> MarklovSolver::solve(){
     // initialize the root state and put into hash map
-    totalBoxMoved = 0;
+    clean();
     Map map(getMap());
     State* curState = new State(0, map);
     allStates[curState->key] = curState;
@@ -127,6 +127,19 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         policy.pop();
     }
     return result;
+}
+
+void MarklovSolver::clean(){
+    totalBoxMoved = 0;
+    // Clean allStates
+    for(auto statePair: allStates){
+        delete statePair.second;
+    }
+    allStates.clear();
+    // Clean policy
+    while(!policy.empty()){
+        policy.pop();
+    }
 }
 
 State* MarklovSolver::restart(){

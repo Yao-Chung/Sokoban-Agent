@@ -22,6 +22,7 @@ public:
     void attach_Visualizer(std::string prefix, std::string extention);
     MarklovSolver(float alpha, float beta, float gamma, unsigned int iter, Map map);
 private:
+    void clean();
     State* restart();
     std::optional<Visualizer> visualizer;
 };
