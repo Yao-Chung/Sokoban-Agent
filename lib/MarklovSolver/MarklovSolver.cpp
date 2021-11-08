@@ -7,8 +7,9 @@ MarklovSolver::MarklovSolver(
     float beta,
     float gamma,
     unsigned int maxIter,
+    unsigned int deltaIter,
     Map map
-): Solver(map), alpha(alpha), beta(beta), gamma(gamma), maxIter(maxIter){
+): Solver(map), alpha(alpha), beta(beta), gamma(gamma), maxIter(maxIter), deltaIter(deltaIter){
 
 }
 
@@ -114,6 +115,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         curState = max_action->next;
         map = move(map, max_action->direction);
         max_action->pathCost += 1;
+        policy.push(max_action);
         // Increase iteration & check iter
         if(iteration >= maxIter){
             iteration = 0;
@@ -143,8 +145,14 @@ void MarklovSolver::clean(){
 }
 
 State* MarklovSolver::restart(){
+    float oldAlpha = alpha;
     alpha = maxIter/policy.top()->pathCost;
-    beta = maxIter/
+    beta = maxIter/totalBoxMoved;
+    gamma = (maxIter/policy.top()->next->finishTargets) + (totalBoxMoved/maxIter);
+    if(alpha >= oldAlpha){
+        maxIter += deltaIter;
+    }
+    return allStates[State::getKey(getMap())];
 }
 
 void MarklovSolver::attach_Visualizer(std::string prefix, std::string extention){
