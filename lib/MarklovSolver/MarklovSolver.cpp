@@ -11,6 +11,10 @@ MarklovSolver::MarklovSolver(
 
 }
 
+static inline std::string getBoxKey(const std::string& key){
+    return key.substr(key.find("B:"));
+}
+
 std::vector<MoveDirection> MarklovSolver::solve(){
     // initialize the root state and put into hash map
     State* curState = new State(0, getMap());
@@ -22,27 +26,29 @@ std::vector<MoveDirection> MarklovSolver::solve(){
         // create states and actions
         for(MoveDirection dir: dirs){
             Map newMap = move(map, dir);
+            std::string newKey = State::getKey(newMap);
             // check if is win or not
             if(isWin(newMap)){
                 finished = true;
                 break;
             }
             // check if newState equals to curState
-            if(curState->key == State::getKey(newMap)){
+            if(curState->key == newKey){
                 continue;
             }
-            // create new state
-            State* newState = new State(curState->distance + 1, newMap);
-            allStates[newState->key] = newState;
+            // Check if state exist or not
+            if(!allStates.contains(newKey)){
+                allStates[newKey] = new State(curState->distance + 1, newMap);
+            }
+            State* nextState = allStates[newKey];
             // Create curState's action
             Action& action = curState->actions.emplace_back();
             action.parent = curState;
-            action.next = newState;
+            action.next = nextState;
             action.direction = dir;
-            // curState.actions.push_back();
+            action.pathCost = 1;
+            action.restartCost = (getBoxKey(curState->key) == getBoxKey(nextState->key)) ? 0 : curState->distance;
         }
-
-
     }
     // std::queue<State> q;
     // q.push(rootState);
@@ -58,8 +64,6 @@ std::vector<MoveDirection> MarklovSolver::solve(){
     //         }
     //     }
     // }
-
-
 }
 
 void MarklovSolver::restart(){
