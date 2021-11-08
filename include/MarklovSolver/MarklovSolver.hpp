@@ -28,6 +28,7 @@ public:
     );
 private:
     void clean();
+    void visualize(unsigned int iteration, State* curState);
     State* restart();
     std::optional<Visualizer> visualizer;
 };

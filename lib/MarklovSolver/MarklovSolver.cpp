@@ -1,6 +1,8 @@
 #include <MarklovSolver/MarklovSolver.hpp>
 
 #include <algorithm>
+#include <stack>
+#include <unordered_set>
 
 MarklovSolver::MarklovSolver(
     float alpha,
@@ -25,8 +27,10 @@ std::stack<MoveDirection> MarklovSolver::solve(){
     allStates[curState->key] = curState;
     // walk from root state
     for(unsigned int iteration = 1; ; ++iteration){
+        // Visualize
+        visualize(iteration, curState);
+        // create states and actions
         if(curState->actions.empty()){
-            // create states and actions
             bool finished = false;
             for(MoveDirection dir: {
                     MoveDirection::Up,
@@ -131,6 +135,8 @@ std::stack<MoveDirection> MarklovSolver::solve(){
     return result;
 }
 
+
+
 void MarklovSolver::clean(){
     totalBoxMoved = 0;
     // Clean allStates
@@ -144,13 +150,88 @@ void MarklovSolver::clean(){
     }
 }
 
+void MarklovSolver::visualize(unsigned int iteration, State* curState){
+    if(visualizer.has_value()){
+        // Copy policy to set
+        std::stack copied = policy;
+        std::unordered_set<Action*> actionSet;
+        while(!copied.empty()){
+            actionSet.emplace(copied.top());
+            copied.pop();
+        }
+        // Get root state
+        State* root = allStates[State::getKey(getMap())];
+        // Print
+        visualizer->out << "digraph{" << std::endl;
+        visualizer->out << "\t{ rank=\"min\" m" << root << " }" << std::endl;
+        for(auto statePair: allStates){
+            State* state = statePair.second;
+            // Print state
+            visualizer->out << "\tm" << state << "[label=\""
+                << "Dis=" << state->distance << "\\n"
+                << "Tar=" << state->finishTargets << "\\n"
+                << "Man=(" << state->manPosition.first << ", " << state->manPosition.second << ")\\n"
+            << "\"";
+            if(state == curState){
+                visualizer->out << ",color=blue";
+            }
+            visualizer->out << "]" << std::endl;
+            // Print actions
+            for(Action* action: state->actions){
+                visualizer->out << "\tm" << action->parent << " -> m" << action->next << "[label=\""
+                    << "P=" << action->pathCost << "\\n"
+                    << "R=" << action->restartCost << "\\n";
+                switch (action->direction){
+                case MoveDirection::Up:
+                    visualizer->out << "Dir=Up\\n";
+                    break;
+                case MoveDirection::Down:
+                    visualizer->out << "Dir=Down\\n";
+                    break;
+                case MoveDirection::Left:
+                    visualizer->out << "Dir=Left\\n";
+                    break;
+                case MoveDirection::Right:
+                    visualizer->out << "Dir=Right\\n";
+                    break;
+                }
+                visualizer->out << "\"";
+                // Color actions in policy
+                if(actionSet.contains(action)){
+                    visualizer->out << ", color=red";
+                }
+                visualizer->out << "]" << std::endl;
+            }
+        }
+        // Print additional values
+        visualizer->out << "additional[label=\""
+            << "a=" << alpha << "\\n"
+            << "b=" << beta << "\\n"
+            << "r=" << gamma << "\\n"
+            << "mI=" << maxIter << "\\n"
+            << "i=" << iteration << "\\n"
+        << "\",shape=note]" << std::endl;
+        // Epilogue
+        visualizer->out << "}" << std::endl;
+        visualizer->next();
+    }
+}
+
+#define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 1e-6)
+
 State* MarklovSolver::restart(){
+    // Update variables
     float oldAlpha = alpha;
-    alpha = maxIter/policy.top()->pathCost;
-    beta = maxIter/totalBoxMoved;
-    gamma = (maxIter/policy.top()->next->finishTargets) + (totalBoxMoved/maxIter);
+    alpha = maxIter / policy.top()->pathCost;
+    beta = maxIter / divide_guard(totalBoxMoved);
+    gamma = (maxIter / divide_guard(policy.top()->next->finishTargets)) + (totalBoxMoved/maxIter);
     if(alpha >= oldAlpha){
         maxIter += deltaIter;
+    }
+    // Clean policies & totalBoxMove
+    totalBoxMoved = 0;
+    while(!policy.empty()){
+        policy.pop();
     }
     return allStates[State::getKey(getMap())];
 }

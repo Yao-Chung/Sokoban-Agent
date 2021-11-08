@@ -14,11 +14,12 @@ static void printUsage(char const *argv0){
         << " <beta_value>"
         << " <gamma_value>"
         << " <iter_value>"
+        << " <iter_delta_value>"
     << "\n" << std::endl;
 }
 
 static std::unordered_map<std::string, std::any> parseArgs(int argc, char const *argv[]){
-    if(argc < 5){
+    if(argc < 6){
         std::cerr << "Error: Insufficient command-line arguments!" << std::endl;
         printUsage(argv[0]);
         std::exit(-1);
@@ -28,6 +29,7 @@ static std::unordered_map<std::string, std::any> parseArgs(int argc, char const 
     result.emplace("beta", (float)std::atof(argv[2]));
     result.emplace("gamma", (float)std::atof(argv[3]));
     result.emplace("iter", (unsigned int)std::atoi(argv[4]));
+    result.emplace("iter_delta", (unsigned int)std::atoi(argv[5]));
     return result;
 }
 
@@ -60,9 +62,14 @@ int main(int argc, char const *argv[])
         std::any_cast<float>(args["beta"]),
         std::any_cast<float>(args["gamma"]),
         std::any_cast<unsigned int>(args["iter"]),
+        std::any_cast<unsigned int>(args["iter_delta"]),
         map
     );
-    solver.attach_Visualizer("test", ".txt");
+    // Print map
+    for(std::string row: map){
+        std::cout << row << std::endl;
+    }
+    solver.attach_Visualizer("output/out", ".dot");
     // Solve
     std::stack<MoveDirection> policy = solver.solve();
     return 0;
