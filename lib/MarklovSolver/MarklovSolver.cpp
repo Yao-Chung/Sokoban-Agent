@@ -6,9 +6,9 @@ MarklovSolver::MarklovSolver(
     float alpha,
     float beta,
     float gamma,
-    unsigned int iter,
+    unsigned int maxIter,
     Map map
-): Solver(map), alpha(alpha), beta(beta), gamma(gamma), iter(iter){
+): Solver(map), alpha(alpha), beta(beta), gamma(gamma), maxIter(maxIter){
 
 }
 
@@ -17,14 +17,13 @@ static inline std::string getBoxKey(const std::string& key){
 }
 
 std::stack<MoveDirection> MarklovSolver::solve(){
-    // Policy
-    std::stack<Action*> policy;
     // initialize the root state and put into hash map
+    totalBoxMoved = 0;
     Map map(getMap());
     State* curState = new State(0, map);
     allStates[curState->key] = curState;
     // walk from root state
-    while(true){
+    for(unsigned int iteration = 1; ; ++iteration){
         if(curState->actions.empty()){
             // create states and actions
             bool finished = false;
@@ -58,7 +57,12 @@ std::stack<MoveDirection> MarklovSolver::solve(){
                 action->next = nextState;
                 action->direction = dir;
                 action->pathCost = 0;
-                action->restartCost = (getBoxKey(curState->key) == getBoxKey(nextState->key)) ? 0 : curState->distance;
+                if(getBoxKey(curState->key) == getBoxKey(nextState->key)) {
+                    action->restartCost = 0;   
+                }else{
+                    action->restartCost = curState->distance;
+                    totalBoxMoved += 1;
+                }
             }
             // Unsolved or solved
             if(finished || curState->actions.empty()){
@@ -109,9 +113,12 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         // Update map to newMap
         curState = max_action->next;
         map = move(map, max_action->direction);
+        max_action->pathCost += 1;
         // Increase iteration & check iter
-
-        visualizer->next();
+        if(iteration >= maxIter){
+            iteration = 0;
+            curState = restart();
+        }
     }
     // Transform to direction vector
     std::stack<MoveDirection> result;
@@ -123,11 +130,8 @@ std::stack<MoveDirection> MarklovSolver::solve(){
 }
 
 State* MarklovSolver::restart(){
-
-}
-
-void MarklovSolver::update(){
-
+    alpha = maxIter/policy.top()->pathCost;
+    beta = maxIter/
 }
 
 void MarklovSolver::attach_Visualizer(std::string prefix, std::string extention){

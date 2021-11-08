@@ -14,15 +14,15 @@ public:
     float alpha;
     float beta;
     float gamma;
-    unsigned int iter;
+    unsigned int maxIter;
+    unsigned int totalBoxMoved;
     std::unordered_map<std::string, State*> allStates;
-
+    std::stack<Action*> policy;
     std::stack<MoveDirection> solve();
     void attach_Visualizer(std::string prefix, std::string extention);
     MarklovSolver(float alpha, float beta, float gamma, unsigned int iter, Map map);
 private:
     State* restart();
-    void update();
     std::optional<Visualizer> visualizer;
 };
 
