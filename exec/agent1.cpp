@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <stack>
 #include <iostream>
 #include <any>
 #include <cstdlib>
@@ -61,7 +62,8 @@ int main(int argc, char const *argv[])
         std::any_cast<unsigned int>(args["iter"]),
         map
     );
+    solver.attach_Visualizer("test", ".txt");
     // Solve
-    std::vector<MoveDirection> policy = solver.solve();
+    std::stack<MoveDirection> policy = solver.solve();
     return 0;
 }
