@@ -27,6 +27,7 @@ struct State{
 
     State() = default;
     State(unsigned int distance, Map map);
+    ~State();
     static std::string getKey(const Map map);
     static std::string getKey(const Position manPos, const std::vector<Position> boxPos);
     static std::pair< Position, std::vector<Position> > getPositions(const Map map);

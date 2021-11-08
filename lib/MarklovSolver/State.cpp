@@ -18,6 +18,12 @@ State::State(unsigned int distance, Map map):
     }
 }
 
+State::~State(){
+    for(Action* action: actions){
+        delete action;
+    }
+}
+
 std::string State::getKey(const Map map){
     std::pair< Position, std::vector<Position> > positions = getPositions(map);
     return getKey(positions.first, positions.second);

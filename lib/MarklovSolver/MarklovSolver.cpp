@@ -1,6 +1,6 @@
 #include <MarklovSolver/MarklovSolver.hpp>
-#include <queue>
-#include <optional>
+
+#include <algorithm>
 
 MarklovSolver::MarklovSolver(
     float alpha,
@@ -16,10 +16,9 @@ static inline std::string getBoxKey(const std::string& key){
     return key.substr(key.find("B:"));
 }
 
-std::vector<MoveDirection> MarklovSolver::solve(){
-    // Variables
-    std::vector<MoveDirection> result;
-    std::optional<MoveDirection> lastDirection;
+std::stack<MoveDirection> MarklovSolver::solve(){
+    // Policy
+    std::stack<Action*> policy;
     // initialize the root state and put into hash map
     Map map(getMap());
     State* curState = new State(0, map);
@@ -67,26 +66,33 @@ std::vector<MoveDirection> MarklovSolver::solve(){
             }
         }
         // Check if no further action without backward
-        if(curState->actions.size() == 1 && lastDirection.has_value()){
+        if(curState->actions.size() == 1 && !policy.empty()){
             bool isBackWard = false;
-            switch (curState->actions[0]->direction){
+            switch (curState->actions.back()->direction){
             case MoveDirection::Up:
-                isBackWard = (lastDirection == MoveDirection::Down);
+                isBackWard = (policy.top()->direction == MoveDirection::Down);
                 break;
             case MoveDirection::Down:
-                isBackWard = (lastDirection == MoveDirection::Up);
+                isBackWard = (policy.top()->direction == MoveDirection::Up);
                 break;
             case MoveDirection::Left:
-                isBackWard = (lastDirection == MoveDirection::Right);
+                isBackWard = (policy.top()->direction == MoveDirection::Right);
                 break;
             case MoveDirection::Right:
-                isBackWard = (lastDirection == MoveDirection::Left);
+                isBackWard = (policy.top()->direction == MoveDirection::Left);
                 break;
             }
             if(isBackWard){
-                curState = max_action->next;
-                map = move(map, max_action->direction);
-                lastDirection = max_action->direction;
+                // Move
+                map = move(map, curState->actions.back()->direction);
+                // Clean
+                State* backState = policy.top()->parent;
+                backState->actions.erase(std::find(backState->actions.begin(), backState->actions.end(), policy.top()));
+                allStates.erase(curState->key);
+                delete curState;
+                curState = backState;
+                delete policy.top();
+                policy.pop();
                 continue;
             }
         }
@@ -103,9 +109,14 @@ std::vector<MoveDirection> MarklovSolver::solve(){
         // Update map to newMap
         curState = max_action->next;
         map = move(map, max_action->direction);
-        lastDirection = max_action->direction;
         // Increase iteration & check iter
 
+    }
+    // Transform to direction vector
+    std::stack<MoveDirection> result;
+    while(!policy.empty()){
+        result.push(policy.top()->direction);
+        policy.pop();
     }
     return result;
 }

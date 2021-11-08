@@ -1,7 +1,7 @@
 #ifndef SOKOBAN_AGENT_MARKLOVSOLVER
 #define SOKOBAN_AGENT_MARKLOVSOLVER
 
-#include <vector>
+#include <stack>
 #include <defines.hpp>
 #include <Solver.hpp>
 #include <MarklovSolver/State.hpp>
@@ -15,7 +15,7 @@ public:
     unsigned int iter;
     std::unordered_map<std::string, State*> allStates;
 
-    std::vector<MoveDirection> solve();
+    std::stack<MoveDirection> solve();
     MarklovSolver(float alpha, float beta, float gamma, unsigned int iter, Map map);
 private:
     State* restart();
