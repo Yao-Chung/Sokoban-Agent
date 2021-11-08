@@ -111,6 +111,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         map = move(map, max_action->direction);
         // Increase iteration & check iter
 
+        visualizer->next();
     }
     // Transform to direction vector
     std::stack<MoveDirection> result;
@@ -127,4 +128,8 @@ State* MarklovSolver::restart(){
 
 void MarklovSolver::update(){
 
+}
+
+void MarklovSolver::attach_Visualizer(std::string prefix, std::string extention){
+    visualizer.emplace(prefix, extention);
 }
