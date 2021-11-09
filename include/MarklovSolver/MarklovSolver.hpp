@@ -32,7 +32,7 @@ private:
     std::mt19937 random_generator;
     void clean();
     void visualize(unsigned int iteration, State* curState, const Map& map);
-    State* update(const Map &map, unsigned int &iteration);
+    State* update(Map &map, unsigned int &iteration);
     Action* decide(const std::vector<Action*> &actions);
     std::optional<Visualizer> visualizer;
 };

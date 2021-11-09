@@ -33,6 +33,12 @@ static std::unordered_map<std::string, std::any> parseArgs(int argc, char const 
     return result;
 }
 
+static void printMap(const Map& map){
+    for(std::string row : map){
+        std::cout << row << std::endl;
+    }
+}
+
 int main(int argc, char const *argv[])
 {
     // Parse command-line arguments
@@ -68,5 +74,26 @@ int main(int argc, char const *argv[])
     solver.attach_Visualizer("output/out", ".dot");
     // Solve
     std::stack<MoveDirection> policy = solver.solve();
+    // Replay policy
+    std::cout << "== Replay ==" << std::endl;
+    while(!policy.empty()){
+        map = solver.move(map, policy.top());
+        switch(policy.top()){
+            case MoveDirection::Up:
+                std::cout << "Up" << std::endl;
+            break;
+            case MoveDirection::Down:
+                std::cout << "Down" << std::endl;
+            break;
+            case MoveDirection::Left:
+                std::cout << "Left" << std::endl;
+            break;
+            case MoveDirection::Right:
+                std::cout << "Right" << std::endl;
+            break;
+        }
+        printMap(map);
+        policy.pop();
+    }
     return 0;
 }

@@ -73,10 +73,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
                 action->direction = dir;
                 action->pathCost = 1;
                 action->confidence = 0;
-                action->restartCost = 0;   
-                if(getBoxKey(curState->key) != getBoxKey(nextState->key)) {
-                    totalBoxMoved += 1;
-                }
+                action->restartCost = 0;
             }
             // Unsolved or solved
             if(finished || curState->actions.empty()){
@@ -126,6 +123,9 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         }
         // Move
         Action* decision = decide(curState->actions);
+        if(getBoxKey(curState->key) != getBoxKey(decision->next->key)) {
+            totalBoxMoved += 1;
+        }
         map = move(map, decision->direction);
         decision->pathCost += 1;
         // Update policy & current state
@@ -140,8 +140,6 @@ std::stack<MoveDirection> MarklovSolver::solve(){
     }
     return result;
 }
-
-
 
 void MarklovSolver::clean(){
     totalBoxMoved = 0;
@@ -185,7 +183,7 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map
                 << "Man=(" << state->manPosition.first << ", " << state->manPosition.second << ")\\n"
             << "\"";
             if(state == curState){
-                visualizer->out << ",color=blue";
+                visualizer->out << ", style=filled, fillcolor=orange";
             }
             visualizer->out << "]" << std::endl;
             // Print actions
@@ -217,7 +215,7 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map
             }
         }
         // Print additional values
-        visualizer->out << "additional[label=\""
+        visualizer->out << "\n\tadditional[label=\""
             << "a=" << alpha << "\\n"
             << "b=" << beta << "\\n"
             << "r=" << gamma << "\\n"
@@ -254,21 +252,24 @@ Action* MarklovSolver::decide(const std::vector<Action*> &actions){
 
 #define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 0.5)
 
-State* MarklovSolver::update(const Map &map, unsigned int &iteration){
+State* MarklovSolver::update(Map &map, unsigned int &iteration){
     // Check dead
     State* curState = policy.top()->next;
     std::vector<Position> boxPositions = curState->boxPosition;
     bool isDead = false;
     for(Position pos: boxPositions){
         int nextToWall = 0;
-        int row = pos.first, col = pos.second;
+        int col = pos.first, row = pos.second;
+        // Check if box on target
         if(map[row][col] == '%'){
             continue;
         }
-        if(map[row][col+1] == '#' || map[row][col-1] == '#'){
+        // Check horizontal 
+        if((map[row][col+1] == '#') || (map[row][col-1] == '#')){
             nextToWall += 1;
         }
-        if(map[row+1][col] == '#' || map[row-1][col] == '#'){
+        // Check vertical
+        if((map[row+1][col] == '#') || (map[row-1][col] == '#')){
             nextToWall += 1;
         }
         if(nextToWall == 2){
@@ -306,7 +307,8 @@ State* MarklovSolver::update(const Map &map, unsigned int &iteration){
     totalRestart += 1;
     totalBoxMoved = 0;
     iteration = 0;
-    return allStates[State::getKey(getMap())];
+    map = getMap();
+    return allStates[State::getKey(map)];
 }
 
 void MarklovSolver::attach_Visualizer(std::string prefix, std::string extention){
