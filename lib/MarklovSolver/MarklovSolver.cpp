@@ -1,6 +1,7 @@
 #include <MarklovSolver/MarklovSolver.hpp>
 
 #include <algorithm>
+#include <valarray>
 #include <stack>
 #include <unordered_set>
 #include <iostream>
@@ -12,8 +13,9 @@ MarklovSolver::MarklovSolver(
     unsigned int maxIter,
     unsigned int deltaIter,
     Map map
-): Solver(map), alpha(alpha), beta(beta), gamma(gamma), maxIter(maxIter), deltaIter(deltaIter){
-
+): Solver(map), alpha(alpha), beta(beta), gamma(gamma), maxIter(maxIter), deltaIter(deltaIter),
+    random_generator(std::random_device()())
+{
 }
 
 static inline std::string getBoxKey(const std::string& key){
@@ -64,10 +66,8 @@ std::stack<MoveDirection> MarklovSolver::solve(){
                 action->direction = dir;
                 action->pathCost = 1;
                 action->confidence = 0;
-                if(getBoxKey(curState->key) == getBoxKey(nextState->key)) {
-                    action->restartCost = 0;   
-                }else{
-                    action->restartCost = curState->distance;
+                action->restartCost = 0;   
+                if(getBoxKey(curState->key) != getBoxKey(nextState->key)) {
                     totalBoxMoved += 1;
                 }
             }
@@ -107,32 +107,23 @@ std::stack<MoveDirection> MarklovSolver::solve(){
                 continue;
             }
         }
-        // Calculate confidence for each action and Decide action
-        float max_confidence = -1.0f;
-        Action *max_action = nullptr;
+        // Calculate confidence for each action
         for(Action* action: curState->actions){
-            action->confidence += (alpha/(float)action->pathCost);
+            action->confidence = alpha / (float)action->pathCost;
             if(action->restartCost > 0){
-                action->confidence += beta/(float)action->restartCost;
+                action->confidence += beta / (float)action->restartCost;
             }
             if(curState->finishTargets > 0){
-                action->confidence += gamma*(float)curState->finishTargets;
-            }
-            if(action->confidence > max_confidence){
-                max_confidence = action->confidence;
-                max_action = action;
+                action->confidence += gamma * (float)curState->finishTargets;
             }
         }
-        // Update map to newMap
-        curState = max_action->next;
-        map = move(map, max_action->direction);
-        max_action->pathCost += 1;
-        policy.push(max_action);
-        // Increase iteration & check iter
-        if(iteration >= maxIter){
-            iteration = 0;
-            curState = restart();
-        }
+        // Move
+        Action* decision = decide(curState->actions);
+        map = move(map, decision->direction);
+        decision->pathCost += 1;
+        // Update policy & current state
+        policy.push(decision);
+        curState = update();
     }
     // Transform to direction vector
     std::stack<MoveDirection> result;
@@ -230,9 +221,31 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map
     }
 }
 
+Action* MarklovSolver::decide(const std::vector<Action*> &actions){
+    // Extract confidences
+    std::valarray<float> possibilities(actions.size());
+    std::transform(actions.begin(), actions.end(), std::begin(possibilities),
+        [](Action* action){
+            return action->confidence;
+        }
+    );
+    // Calculate possibilities of each action
+    possibilities /= possibilities.sum();
+    // Generate random float number between 0 to 1
+    float choice = std::generate_canonical<float, 32>(random_generator);
+    // Make decision 
+    for(size_t i = 0; i < possibilities.size(); ++i){
+        choice -= possibilities[i];
+        if(choice <= 0){
+            return actions[i];
+        }
+    }
+    return actions.back();
+}
+
 #define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 0.5)
 
-State* MarklovSolver::restart(){
+State* MarklovSolver::update(){
     // Update variables
     float oldAlpha = alpha;
     alpha = (float)maxIter / (float)policy.top()->pathCost;

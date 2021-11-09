@@ -2,6 +2,7 @@
 #define SOKOBAN_AGENT_MARKLOVSOLVER
 
 #include <stack>
+#include <random>
 #include <optional>
 #include <defines.hpp>
 #include <Solver.hpp>
@@ -27,9 +28,11 @@ public:
         Map map
     );
 private:
+    std::mt19937 random_generator;
     void clean();
     void visualize(unsigned int iteration, State* curState, const Map& map);
-    State* restart();
+    Action* decide(const std::vector<Action*> &actions);
+    State* update();
     std::optional<Visualizer> visualizer;
 };
 
