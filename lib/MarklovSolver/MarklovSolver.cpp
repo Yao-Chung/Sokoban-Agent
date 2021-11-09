@@ -37,8 +37,6 @@ std::stack<MoveDirection> MarklovSolver::solve(){
     allStates[curState->key] = curState;
     // walk from root state
     for(unsigned int iteration = 1; ; ++iteration){
-        // Visualize
-        visualize(iteration, curState, map);
         // create states and actions
         if(curState->actions.empty()){
             bool finished = false;
@@ -77,6 +75,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
             }
             // Unsolved or solved
             if(finished || curState->actions.empty()){
+                visualize(iteration, curState, map);
                 break;
             }
         }
@@ -130,7 +129,9 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         decision->pathCost += 1;
         // Update policy & current state
         policy.push(decision);
-        curState = update(map, iteration);
+        curState = update(map, iteration, [=](){
+            visualize(iteration, curState, map);
+        });
     }
     // Transform to direction vector
     std::stack<MoveDirection> result;
@@ -252,7 +253,7 @@ Action* MarklovSolver::decide(const std::vector<Action*> &actions){
 
 #define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 0.5)
 
-State* MarklovSolver::update(Map &map, unsigned int &iteration){
+State* MarklovSolver::update(Map &map, unsigned int &iteration, std::function<void()> onRestart = [](){}){
     // Check dead
     State* curState = policy.top()->next;
     std::vector<Position> boxPositions = curState->boxPosition;
@@ -308,6 +309,8 @@ State* MarklovSolver::update(Map &map, unsigned int &iteration){
     totalBoxMoved = 0;
     iteration = 0;
     map = getMap();
+    // Invoke callback
+    onRestart();
     return allStates[State::getKey(map)];
 }
 

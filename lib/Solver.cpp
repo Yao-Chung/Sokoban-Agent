@@ -81,7 +81,7 @@ Map Solver::move(const Map& map, const MoveDirection direction){
 
 bool Solver::isWin(const Map& map){
     for(std::string row: map){
-        if(row.find('.') != std::string::npos){
+        if(row.find('$') != std::string::npos){
             return false;
         }
     }

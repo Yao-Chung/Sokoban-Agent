@@ -4,6 +4,8 @@
 #include <stack>
 #include <random>
 #include <optional>
+#include <functional>
+
 #include <defines.hpp>
 #include <Solver.hpp>
 #include <MarklovSolver/State.hpp>
@@ -32,7 +34,7 @@ private:
     std::mt19937 random_generator;
     void clean();
     void visualize(unsigned int iteration, State* curState, const Map& map);
-    State* update(Map &map, unsigned int &iteration);
+    State* update(Map &map, unsigned int &iteration, std::function<void()> onRestart);
     Action* decide(const std::vector<Action*> &actions);
     std::optional<Visualizer> visualizer;
 };
