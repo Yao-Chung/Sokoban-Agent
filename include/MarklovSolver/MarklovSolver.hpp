@@ -17,6 +17,7 @@ public:
     unsigned int maxIter;
     unsigned int deltaIter;
     unsigned int totalBoxMoved;
+    unsigned int totalRestart;
     std::unordered_map<std::string, State*> allStates;
     std::stack<Action*> policy;
     std::stack<MoveDirection> solve();
@@ -29,7 +30,7 @@ public:
 private:
     void clean();
     void visualize(unsigned int iteration, State* curState, const Map& map);
-    State* restart();
+    State* update(const Map &map, unsigned int &iteration);
     std::optional<Visualizer> visualizer;
 };
 

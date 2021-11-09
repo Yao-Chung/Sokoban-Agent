@@ -12,7 +12,14 @@ MarklovSolver::MarklovSolver(
     unsigned int maxIter,
     unsigned int deltaIter,
     Map map
-): Solver(map), alpha(alpha), beta(beta), gamma(gamma), maxIter(maxIter), deltaIter(deltaIter){
+):  Solver(map), 
+    alpha(alpha), 
+    beta(beta), 
+    gamma(gamma), 
+    maxIter(maxIter), 
+    deltaIter(deltaIter),
+    totalBoxMoved(0),
+    totalRestart(0){
 
 }
 
@@ -124,15 +131,11 @@ std::stack<MoveDirection> MarklovSolver::solve(){
             }
         }
         // Update map to newMap
-        curState = max_action->next;
         map = move(map, max_action->direction);
         max_action->pathCost += 1;
         policy.push(max_action);
         // Increase iteration & check iter
-        if(iteration >= maxIter){
-            iteration = 0;
-            curState = restart();
-        }
+        curState = update(map, iteration);
     }
     // Transform to direction vector
     std::stack<MoveDirection> result;
@@ -147,6 +150,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
 
 void MarklovSolver::clean(){
     totalBoxMoved = 0;
+    totalRestart = 0;
     // Clean allStates
     for(auto statePair: allStates){
         delete statePair.second;
@@ -157,6 +161,7 @@ void MarklovSolver::clean(){
         policy.pop();
     }
 }
+#define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 0.5)
 
 void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map& map){
     // Print map
@@ -230,22 +235,58 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map
     }
 }
 
-#define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 0.5)
-
-State* MarklovSolver::restart(){
-    // Update variables
-    float oldAlpha = alpha;
-    alpha = (float)maxIter / (float)policy.top()->pathCost;
-    beta = (float)maxIter / (float)divide_guard(totalBoxMoved);
-    gamma = ((float)maxIter / (float)divide_guard(policy.top()->next->finishTargets)) + ((float)totalBoxMoved/ (float)maxIter);
-    if(alpha >= oldAlpha){
-        maxIter += deltaIter;
+State* MarklovSolver::update(const Map &map, unsigned int &iteration){
+    // Check dead
+    State* curState = policy.top()->next;
+    std::vector<Position> boxPositions = curState->boxPosition;
+    bool isDead = false;
+    for(Position pos: boxPositions){
+        int nextToWall = 0;
+        int row = pos.first, col = pos.second;
+        if(map[row][col] == '%'){
+            continue;
+        }
+        if(map[row][col+1] == '#' || map[row][col-1] == '#'){
+            nextToWall += 1;
+        }
+        if(map[row+1][col] == '#' || map[row-1][col] == '#'){
+            nextToWall += 1;
+        }
+        if(nextToWall == 2){
+            isDead = true;
+            break;
+        }
     }
-    // Clean policies & totalBoxMove
-    totalBoxMoved = 0;
+    // Check iteration > maxIter  
+    if(!isDead){
+        if(iteration >= maxIter){
+            // Update variables
+            float oldAlpha = alpha;
+            alpha = (float)maxIter / (float)policy.top()->pathCost;
+            beta = (float)maxIter / divide_guard((float)totalRestart);
+            gamma = (float)maxIter / divide_guard(
+                (float)policy.top()->next->finishTargets + 
+                (float)totalBoxMoved / (float)maxIter
+            );
+            if(alpha >= oldAlpha){
+                maxIter += deltaIter;
+            }
+        }
+        // No need to retart
+        else{
+            return curState;
+        }
+    }
+    // Need to restart and clean the policy stack
     while(!policy.empty()){
+        Action *action = policy.top();
         policy.pop();
+        action->restartCost += action->parent->distance;
     }
+    // update values
+    totalRestart += 1;
+    totalBoxMoved = 0;
+    iteration = 0;
     return allStates[State::getKey(getMap())];
 }
 
