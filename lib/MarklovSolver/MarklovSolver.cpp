@@ -5,6 +5,7 @@
 #include <stack>
 #include <unordered_set>
 #include <iostream>
+#include <deque>
 
 MarklovSolver::MarklovSolver(
     float alpha,
@@ -29,7 +30,7 @@ static inline std::string getBoxKey(const std::string& key){
     return key.substr(key.find("B:"));
 }
 
-std::stack<MoveDirection> MarklovSolver::solve(){
+std::vector<MoveDirection> MarklovSolver::solve(){
     // initialize the root state and put into hash map
     clean();
     Map map(getMap());
@@ -106,7 +107,8 @@ std::stack<MoveDirection> MarklovSolver::solve(){
                 delete curState;
                 curState = backState;
                 delete policy.top();
-                policy.pop();
+                policy.removeAllOf(curState->actions.back());
+                policy.removeAllOf(policy.top());
                 continue;
             }
         }
@@ -134,9 +136,9 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         });
     }
     // Transform to direction vector
-    std::stack<MoveDirection> result;
-    while(!policy.empty()){
-        result.push(policy.top()->direction);
+    std::vector<MoveDirection> result(policy.size());
+    for(auto rIt = result.rbegin(); rIt != result.rend(); rIt = std::next(rIt)){
+        *rIt = policy.top()->direction;
         policy.pop();
     }
     return result;
@@ -164,7 +166,7 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map
     }
     if(visualizer.has_value()){
         // Copy policy to set
-        std::stack copied = policy;
+        std::stack<Action*> copied(policy);
         std::unordered_set<Action*> actionSet;
         while(!copied.empty()){
             actionSet.emplace(copied.top());
@@ -316,4 +318,8 @@ State* MarklovSolver::update(Map &map, unsigned int &iteration, std::function<vo
 
 void MarklovSolver::attach_Visualizer(std::string prefix, std::string extention){
     visualizer.emplace(prefix, extention);
+}
+
+void MarklovSolver::PolicyStack::removeAllOf(Action* action){
+    std::erase(c, action);
 }

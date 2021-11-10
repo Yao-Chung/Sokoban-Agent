@@ -8,7 +8,7 @@
 class Solver{
 public:
     Solver(const Map map);
-    virtual std::stack<MoveDirection> solve() = 0;
+    virtual std::vector<MoveDirection> solve() = 0;
 protected:
     Map getMap();
     bool isWin(const Map& map);
