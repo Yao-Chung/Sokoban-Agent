@@ -1,6 +1,5 @@
 #include <string>
 #include <vector>
-#include <stack>
 #include <iostream>
 #include <any>
 #include <cstdlib>
@@ -51,7 +50,7 @@ int main(int argc, char const *argv[])
     // }
     
     // FIXME: Hard-coded map
-    std::vector<std::string> map = {
+    std::vector<std::string> level = {
         "########",
         "#. #   #",
         "#  $   #",
@@ -69,17 +68,18 @@ int main(int argc, char const *argv[])
         std::any_cast<float>(args["gamma"]),
         std::any_cast<unsigned int>(args["iter"]),
         std::any_cast<unsigned int>(args["iter_delta"]),
-        map
+        level
     );
     solver.attach_Visualizer("output/out", ".dot");
     // Solve
-    std::stack<MoveDirection> policy = solver.solve();
+    std::vector<MoveDirection> policy = solver.solve();
     // TODO: Optimize policy
     // Replay policy
     std::cout << "== Replay ==" << std::endl;
-    while(!policy.empty()){
-        map = solver.move(map, policy.top());
-        switch(policy.top()){
+    std::vector<std::string> map(level);
+    for(MoveDirection direction: policy){
+        map = move(map, direction, level);
+        switch(direction){
             case MoveDirection::Up:
                 std::cout << "Up" << std::endl;
             break;
@@ -94,7 +94,6 @@ int main(int argc, char const *argv[])
             break;
         }
         printMap(map);
-        policy.pop();
     }
     return 0;
 }

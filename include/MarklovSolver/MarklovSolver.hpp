@@ -22,8 +22,7 @@ public:
     unsigned int totalBoxMoved;
     unsigned int totalRestart;
     std::unordered_map<std::string, State*> allStates;
-    std::stack<Action*> policy;
-    std::stack<MoveDirection> solve();
+    std::vector<MoveDirection> solve();
     void attach_Visualizer(std::string prefix, std::string extention);
     MarklovSolver(
         float alpha, float beta, float gamma, 
@@ -31,6 +30,10 @@ public:
         Map map
     );
 private:
+    struct PolicyStack: public std::stack<Action*>{
+        void removeAllOf(Action*);
+    };
+    PolicyStack policy;
     std::mt19937 random_generator;
     void clean();
     void visualize(unsigned int iteration, State* curState, const Map& map);
