@@ -47,7 +47,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
                     MoveDirection::Right
                 }){
                 Map newMap = move(map, dir);
-                std::string newKey = State::getKey(newMap);
+                std::string newKey = getKey(newMap);
                 // check if is win or not
                 if(isWin(newMap)){
                     finished = true;
@@ -171,7 +171,7 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map
             copied.pop();
         }
         // Get root state
-        State* root = allStates[State::getKey(getMap())];
+        State* root = allStates[getKey(getMap())];
         // Print
         visualizer->out << "digraph{" << std::endl;
         visualizer->out << "\t{ rank=\"min\" m" << root << " }" << std::endl;
@@ -311,7 +311,7 @@ State* MarklovSolver::update(Map &map, unsigned int &iteration, std::function<vo
     map = getMap();
     // Invoke callback
     onRestart();
-    return allStates[State::getKey(map)];
+    return allStates[getKey(map)];
 }
 
 void MarklovSolver::attach_Visualizer(std::string prefix, std::string extention){
