@@ -46,7 +46,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
                     MoveDirection::Left,
                     MoveDirection::Right
                 }){
-                Map newMap = move(map, dir);
+                Map newMap = move(map, dir, getMap());
                 std::string newKey = getKey(newMap);
                 // check if is win or not
                 if(isWin(newMap)){
@@ -98,7 +98,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
             }
             if(isBackWard){
                 // Move
-                map = move(map, curState->actions.back()->direction);
+                map = move(map, curState->actions.back()->direction, getMap());
                 // Clean
                 State* backState = policy.top()->parent;
                 backState->actions.erase(std::find(backState->actions.begin(), backState->actions.end(), policy.top()));
@@ -125,7 +125,7 @@ std::stack<MoveDirection> MarklovSolver::solve(){
         if(getBoxKey(curState->key) != getBoxKey(decision->next->key)) {
             totalBoxMoved += 1;
         }
-        map = move(map, decision->direction);
+        map = move(map, decision->direction, getMap());
         decision->pathCost += 1;
         // Update policy & current state
         policy.push(decision);
