@@ -74,6 +74,7 @@ int main(int argc, char const *argv[])
     solver.attach_Visualizer("output/out", ".dot");
     // Solve
     std::stack<MoveDirection> policy = solver.solve();
+    // TODO: Optimize policy
     // Replay policy
     std::cout << "== Replay ==" << std::endl;
     while(!policy.empty()){
