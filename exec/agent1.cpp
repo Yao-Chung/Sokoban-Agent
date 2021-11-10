@@ -5,7 +5,10 @@
 #include <cstdlib>
 #include <unordered_map>
 #include <HttpClient.hpp>
+
 #include <MarklovSolver/MarklovSolver.hpp>
+#include <MarklovSolver/PolicyVisualizer.hpp>
+#include <PolicyOptimize.hpp>
 
 static void printUsage(char const *argv0){
     std::cerr << "Usage: " << argv0
@@ -73,7 +76,8 @@ int main(int argc, char const *argv[])
     solver.attach_Visualizer("output/out", ".dot");
     // Solve
     std::vector<MoveDirection> policy = solver.solve();
-    // TODO: Optimize policy
+    // Optimize policy
+    policy = PolicyOptimize::optimize(level, policy);
     // Replay policy
     std::cout << "== Replay ==" << std::endl;
     std::vector<std::string> map(level);
@@ -95,5 +99,8 @@ int main(int argc, char const *argv[])
         }
         printMap(map);
     }
+    // Print States
+    PolicyVisualizer policyVisualizer("states", ".dot");
+    policyVisualizer.visualize(policy, solver.rootState);
     return 0;
 }

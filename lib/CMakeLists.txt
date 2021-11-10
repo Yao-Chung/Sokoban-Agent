@@ -6,4 +6,5 @@ add_library(sokoban-agent
     PolicyOptimize.cpp
     MarklovSolver/MarklovSolver.cpp
     MarklovSolver/State.cpp
+    MarklovSolver/PolicyVisualizer.cpp
 )

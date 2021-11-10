@@ -21,6 +21,7 @@ public:
     unsigned int deltaIter;
     unsigned int totalBoxMoved;
     unsigned int totalRestart;
+    State* rootState;
     std::unordered_map<std::string, State*> allStates;
     std::vector<MoveDirection> solve();
     void attach_Visualizer(std::string prefix, std::string extention);

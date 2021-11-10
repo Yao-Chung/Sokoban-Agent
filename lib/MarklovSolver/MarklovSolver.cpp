@@ -35,6 +35,7 @@ std::vector<MoveDirection> MarklovSolver::solve(){
     clean();
     Map map(getMap());
     State* curState = new State(0, map);
+    rootState = curState;
     allStates[curState->key] = curState;
     // walk from root state
     for(unsigned int iteration = 1; ; ++iteration){
@@ -131,8 +132,11 @@ std::vector<MoveDirection> MarklovSolver::solve(){
         decision->pathCost += 1;
         // Update policy & current state
         policy.push(decision);
-        curState = update(map, iteration, [=](){
+        curState = update(map, iteration, [&](){
             visualize(iteration, curState, map);
+            if(visualizer.has_value()){
+                visualizer->next();
+            }
         });
     }
     // Transform to direction vector
@@ -172,11 +176,9 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map
             actionSet.emplace(copied.top());
             copied.pop();
         }
-        // Get root state
-        State* root = allStates[getKey(getMap())];
         // Print
         visualizer->out << "digraph{" << std::endl;
-        visualizer->out << "\t{ rank=\"min\" m" << root << " }" << std::endl;
+        visualizer->out << "\t{ rank=\"min\" m" << rootState << " }" << std::endl;
         for(auto statePair: allStates){
             State* state = statePair.second;
             // Print state
@@ -227,7 +229,6 @@ void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map
         << "\",shape=note]" << std::endl;
         // Epilogue
         visualizer->out << "}" << std::endl;
-        visualizer->next();
     }
 }
 
@@ -313,7 +314,7 @@ State* MarklovSolver::update(Map &map, unsigned int &iteration, std::function<vo
     map = getMap();
     // Invoke callback
     onRestart();
-    return allStates[getKey(map)];
+    return rootState;
 }
 
 void MarklovSolver::attach_Visualizer(std::string prefix, std::string extention){
