@@ -99,17 +99,7 @@ std::vector<MoveDirection> MarklovSolver::solve(){
                 break;
             }
             if(isBackWard){
-                // Move
-                map = move(map, curState->actions.back()->direction, getMap());
-                // Clean
-                State* backState = policy.top()->parent;
-                backState->actions.erase(std::find(backState->actions.begin(), backState->actions.end(), policy.top()));
-                allStates.erase(curState->key);
-                delete curState;
-                curState = backState;
-                delete policy.top();
-                policy.removeAllOf(curState->actions.back());
-                policy.removeAllOf(policy.top());
+                curState = restart(map, iteration);
                 continue;
             }
         }
@@ -133,11 +123,12 @@ std::vector<MoveDirection> MarklovSolver::solve(){
         // Update policy & current state
         policy.push(decision);
         curState = update(map, iteration, [&](){
-            visualize(iteration, curState, map);
-            if(visualizer.has_value()){
-                visualizer->next();
-            }
+            // visualize(iteration, curState, map);
+            // if(visualizer.has_value()){
+            //     visualizer->next();
+            // }
         });
+        visualize(iteration, curState, map);
     }
     // Transform to direction vector
     std::vector<MoveDirection> result(policy.size());
@@ -164,11 +155,11 @@ void MarklovSolver::clean(){
 #define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 0.5)
 
 void MarklovSolver::visualize(unsigned int iteration, State* curState, const Map& map){
-    // Print map
-    for(std::string row: map){
-        std::cout << row << std::endl;
-    }
     if(visualizer.has_value()){
+        // Print map
+        for(std::string row: map){
+            std::cout << row << std::endl;
+        }
         // Copy policy to set
         std::stack<Action*> copied(policy);
         std::unordered_set<Action*> actionSet;
@@ -301,6 +292,12 @@ State* MarklovSolver::update(Map &map, unsigned int &iteration, std::function<vo
             return curState;
         }
     }
+    // Invoke callback
+    onRestart();
+    return restart(map, iteration);
+}
+
+State* MarklovSolver::restart(Map &map, unsigned int &iteration){
     // Need to restart and clean the policy stack
     while(!policy.empty()){
         Action *action = policy.top();
@@ -312,8 +309,6 @@ State* MarklovSolver::update(Map &map, unsigned int &iteration, std::function<vo
     totalBoxMoved = 0;
     iteration = 0;
     map = getMap();
-    // Invoke callback
-    onRestart();
     return rootState;
 }
 
