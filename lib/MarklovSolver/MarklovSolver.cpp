@@ -85,7 +85,12 @@ std::vector<MoveDirection> MarklovSolver::solve(){
             }
             // No new actions
             if(curState->actions.empty()){
-                curState = update(map, iteration);
+                curState = update(map, iteration, [=](){
+                    visualize(iteration, curState, map);
+                    if(visualizer.has_value()){
+                        visualizer->next();
+                    }
+                });
                 continue;
             }
         }
