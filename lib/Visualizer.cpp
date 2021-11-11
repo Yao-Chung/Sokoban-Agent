@@ -14,8 +14,12 @@ Visualizer::~Visualizer(){
 }
 
 void Visualizer::next(){
+    static int counter = 0;
+    counter += 1;
     std::stringstream stream(prefix);
-    page += 1;
+    if(counter == 100){
+        page += 1;
+    }
     out.close();
     stream << prefix << "_" << page  << extension;
     out.open(stream.str());

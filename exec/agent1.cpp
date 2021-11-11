@@ -63,6 +63,29 @@ int main(int argc, char const *argv[])
         "#  .# @#",
         "########",
     };
+    // std::vector<std::string> level = {
+    //     "##########",
+    //     "#####  . #",
+    //     "#####    #",
+    //     "#####.  .#",
+    //     "#####    #",
+    //     "# #### $ #",
+    //     "# ##  $# #",
+    //     "#@$ .  $ #",
+    //     "#  #  #  #",
+    //     "##########",
+    // };
+    // std::vector<std::string> level = {
+    //     "########",
+    //     "###   ##",
+    //     "#.@$  ##",
+    //     "### $.##",
+    //     "#.##$ ##",
+    //     "# # . ##",
+    //     "#$ %$$.#",
+    //     "#   .  #",
+    //     "########",
+    // };
 
     // Marklov solver
     MarklovSolver solver(
@@ -99,6 +122,7 @@ int main(int argc, char const *argv[])
         }
         printMap(map);
     }
+    printMap(map);
     // Print States
     PolicyVisualizer policyVisualizer("states", ".dot");
     policyVisualizer.visualize(policy, solver.rootState);

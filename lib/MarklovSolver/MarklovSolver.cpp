@@ -50,22 +50,20 @@ std::vector<MoveDirection> MarklovSolver::solve(){
                 }){
                 Map newMap = move(map, dir, getMap());
                 std::string newKey = getKey(newMap);
-                // check if is win or not
-                if(isWin(newMap)){
-                    finished = true;
-                    break;
-                }
                 // check if newState equals to curState (hit wall or hit box)
                 if(curState->key == newKey){
                     continue;
                 }
                 // Check if state exist or not
                 if(allStates.contains(newKey)){
-                    allStates[newKey]->parents.emplace(curState);
+                    if(curState->parents.contains(allStates[newKey])){
+                        continue;
+                    }
                 }else{
                     allStates[newKey] = new State(curState->distance + 1, newMap);
                 }
                 State* nextState = allStates[newKey];
+                nextState->parents.emplace(curState);
                 // Create curState's action
                 Action* action = curState->actions.emplace_back(new Action());
                 action->parent = curState;
@@ -74,35 +72,45 @@ std::vector<MoveDirection> MarklovSolver::solve(){
                 action->pathCost = 1;
                 action->confidence = 0;
                 action->restartCost = 0;
+                // check if is win or not
+                if(isWin(newMap)){
+                    finished = true;
+                    break;
+                }
             }
-            // Unsolved or solved
-            if(finished || curState->actions.empty()){
+            // Solved
+            if(finished){
                 visualize(iteration, curState, map);
                 break;
             }
-        }
-        // Check if no further action without backward
-        if(curState->actions.size() == 1 && !policy.empty()){
-            bool isBackWard = false;
-            switch (curState->actions.back()->direction){
-            case MoveDirection::Up:
-                isBackWard = (policy.top()->direction == MoveDirection::Down);
-                break;
-            case MoveDirection::Down:
-                isBackWard = (policy.top()->direction == MoveDirection::Up);
-                break;
-            case MoveDirection::Left:
-                isBackWard = (policy.top()->direction == MoveDirection::Right);
-                break;
-            case MoveDirection::Right:
-                isBackWard = (policy.top()->direction == MoveDirection::Left);
-                break;
-            }
-            if(isBackWard){
-                curState = restart(map, iteration);
+            // No new actions
+            if(curState->actions.empty()){
+                curState = update(map, iteration);
                 continue;
             }
         }
+        // // Check if no further action without backward
+        // if(curState->actions.size() == 1 && !policy.empty()){
+        //     bool isBackWard = false;
+        //     switch (curState->actions.back()->direction){
+        //     case MoveDirection::Up:
+        //         isBackWard = (policy.top()->direction == MoveDirection::Down);
+        //         break;
+        //     case MoveDirection::Down:
+        //         isBackWard = (policy.top()->direction == MoveDirection::Up);
+        //         break;
+        //     case MoveDirection::Left:
+        //         isBackWard = (policy.top()->direction == MoveDirection::Right);
+        //         break;
+        //     case MoveDirection::Right:
+        //         isBackWard = (policy.top()->direction == MoveDirection::Left);
+        //         break;
+        //     }
+        //     // if(isBackWard){
+        //     //     curState = restart(map, iteration);
+        //     //     continue;
+        //     // }
+        // }
         // Calculate confidence for each action
         for(Action* action: curState->actions){
             action->confidence = alpha / (float)action->pathCost;
@@ -122,13 +130,11 @@ std::vector<MoveDirection> MarklovSolver::solve(){
         decision->pathCost += 1;
         // Update policy & current state
         policy.push(decision);
-        curState = update(map, iteration, [&](){
-            // visualize(iteration, curState, map);
-            // if(visualizer.has_value()){
-            //     visualizer->next();
-            // }
-        });
         visualize(iteration, curState, map);
+        if(visualizer.has_value()){
+            visualizer->next();
+        }
+        curState = update(map, iteration);
     }
     // Transform to direction vector
     std::vector<MoveDirection> result(policy.size());
@@ -247,7 +253,7 @@ Action* MarklovSolver::decide(const std::vector<Action*> &actions){
 
 #define divide_guard(EXPR) ((EXPR > 0) ? EXPR : 0.5)
 
-State* MarklovSolver::update(Map &map, unsigned int &iteration, std::function<void()> onRestart = [](){}){
+State* MarklovSolver::update(Map &map, unsigned int &iteration, std::function<void()> onRestart){
     // Check dead
     State* curState = policy.top()->next;
     std::vector<Position> boxPositions = curState->boxPosition;
