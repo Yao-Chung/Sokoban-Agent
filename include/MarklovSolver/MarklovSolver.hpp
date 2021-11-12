@@ -35,7 +35,7 @@ private:
         void removeAllOf(Action*);
     };
     PolicyStack policy;
-    std::mt19937 random_generator;
+    
     void clean();
     void visualize(unsigned int iteration, State* curState, const Map& map);
     State* update(Map &map, unsigned int &iteration, std::function<void()> onRestart);

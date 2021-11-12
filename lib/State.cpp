@@ -1,4 +1,4 @@
-#include <MarklovSolver/State.hpp>
+#include <State.hpp>
 
 State::State(unsigned int distance, Map map, State* parent):
     parent(parent), distance(distance), restartCost(0), finishTargets(0)
