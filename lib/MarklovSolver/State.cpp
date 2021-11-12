@@ -1,7 +1,7 @@
 #include <MarklovSolver/State.hpp>
 
-State::State(unsigned int distance, Map map):
-    distance(distance), finishTargets(0)
+State::State(unsigned int distance, Map map, State* parent):
+    parent(parent), distance(distance), restartCost(0), finishTargets(0)
 {
     std::pair< Position, std::vector<Position> > positions(getPositions(map));
     manPosition = positions.first;
@@ -17,7 +17,7 @@ State::State(unsigned int distance, Map map):
 }
 
 State::~State(){
-    for(Action* action: actions){
-        delete action;
+    for(auto p: childs){
+        delete p.second.first;
     }
 }

@@ -2,32 +2,21 @@
 #define SOKOBAN_AGENT_STATE
 
 #include <vector>
-#include <unordered_set>
+#include <unordered_map>
 #include <defines.hpp>
 
-struct State;
-
-struct Action{
-    unsigned int pathCost;
-    unsigned int restartCost;
-    float confidence;
-    MoveDirection direction;
-    State *parent;
-    State *next;
-};
-
 struct State{
-    std::unordered_set<State*> parents;
-    std::vector<Action*> actions;
-
+    State* parent;
+    std::unordered_map<MoveDirection, std::pair<State*, float>> childs;
     unsigned int distance;
+    unsigned int restartCost;
     unsigned int finishTargets;
     Position manPosition;
     std::vector<Position> boxPosition;
     std::string key;
 
     State() = default;
-    State(unsigned int distance, Map map);
+    State(unsigned int distance, Map map, State* parent);
     ~State();
 };
 
