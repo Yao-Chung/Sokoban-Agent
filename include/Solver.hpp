@@ -14,6 +14,7 @@ class Solver{
 public:
     Solver(const Map level, std::string prefix = "", std::string extension = "");
     std::vector<MoveDirection> solve();
+    ~Solver();
 
 private:
     Decimal alpha;
@@ -29,6 +30,7 @@ private:
 
     bool isWin(const Map& map);
     Decimal confidence(const State* const state);
+    MoveDirection decide(const State* const state);
     void visualize(const unsigned int iteration, const State* const curState, const Map& map);
     void clean();
     State* restart(Map &map, unsigned int &iteration);

@@ -1,17 +1,31 @@
 #include <Solver.hpp>
-#include <State.hpp>
+
 #include <string>
 #include <queue>
 #include <vector>
 #include <iostream>
 #include <unordered_map>
 
+#include <State.hpp>
+
 Solver::Solver(const Map level, std::string prefix, std::string extension):
-    level(level)
+    alpha(1),
+    beta(1),
+    maxIter(1),
+    boxMoveCount(0),
+    restartCount(0),
+    root(nullptr),
+    level(level),
+    random_generator(std::random_device()())
 {
+    // Attach visualizer
     if(!prefix.empty() || !extension.empty()){
         visualizer.emplace(prefix, extension);
     }
+}
+
+Solver::~Solver(){
+    delete root;
 }
 
 static inline std::string getBoxKey(const std::string& key){
@@ -107,6 +121,7 @@ void Solver::clean(){
 }
 
 bool Solver::isWin(const Map& map){
+    // $ shouldn't exist
     for(std::string row: map){
         if(row.find('$') != std::string::npos){
             return false;
@@ -116,6 +131,7 @@ bool Solver::isWin(const Map& map){
 }
 
 Decimal Solver::confidence(const State* const state){
+    // a / R + b / T
     return (alpha / (Decimal) state->restartCost) + (beta / (Decimal)state->finishTargets);
 }
 
@@ -127,7 +143,27 @@ State* Solver::restart(Map &map, unsigned int &iteration){
     return root;
 }
 
-void Solver::visualize(unsigned int iteration, State* curState, const Map& map){
+MoveDirection Solver::decide(const State* const state){
+    // Calculate confidences and sum
+    std::vector<std::pair<Decimal, MoveDirection>> possibilities;
+    Decimal sum = 0;
+    for(auto [direction, child]: state->childs){
+        std::pair<Decimal, MoveDirection> &pair = possibilities.emplace_back(confidence(child), direction);
+        sum += pair.first;
+    }
+    // Generate random float number between 0 to 1
+    Decimal choice = std::generate_canonical<Decimal, sizeof(Decimal) * 8>(random_generator);
+    // Make decision 
+    for(auto [conf, dir]: possibilities){
+        choice -= conf;
+        if(choice <= 0){
+            return dir;
+        }
+    }
+    return possibilities.back().second;
+}
+
+void Solver::visualize(const unsigned int iteration, const State* const curState, const Map& map){
     if(visualizer.has_value()){
         // Print map
         for(std::string row: map){
@@ -135,20 +171,21 @@ void Solver::visualize(unsigned int iteration, State* curState, const Map& map){
         }
         // Copy policy to set
         std::unordered_map<State*, MoveDirection> policy;
-        for(State* cursor = curState; cursor != nullptr && cursor->parent != nullptr; cursor = cursor->parent){
-            for(auto child: cursor->parent->childs){
-                if(child.second.first == cursor){
-                    policy.emplace(cursor->parent, child.first);
+        for(const State* cursor = curState; cursor != nullptr && cursor->parent != nullptr; cursor = cursor->parent){
+            for(auto [direction, child]: cursor->parent->childs){
+                if(child == cursor){
+                    policy.emplace(cursor->parent, direction);
                 }
             }
         }
         // Prologue
-        visualizer->out << "digraph{" << std::endl;
+        visualizer->out << std::string("digraph{") << std::endl;
         // Print states by BFS
         std::queue<State*> stateQueue;
         stateQueue.push(root);
         while(!stateQueue.empty()){
             State* state = stateQueue.front();
+            stateQueue.pop();
             // Print state
             visualizer->out << "\tm" << state << "[label=\""
                 << "D=" << state->distance << "\\n"
@@ -161,28 +198,25 @@ void Solver::visualize(unsigned int iteration, State* curState, const Map& map){
             }
             visualizer->out << "]" << std::endl;
             // Print actions
-            for(Action* action: state->actions){
-                visualizer->out << "\tm" << action->parent << " -> m" << action->next << "[label=\""
-                    << "P=" << action->pathCost << "\\n"
-                    << "R=" << action->restartCost << "\\n"
-                    << "Con=" << action->confidence << "\\n";
-                switch (action->direction){
+            for(auto [direction, child]: state->childs){
+                visualizer->out << "\tm" << state << " -> m" << child << "[label=\"";
+                switch (direction){
                 case MoveDirection::Up:
-                    visualizer->out << "Dir=Up\\n";
+                    visualizer->out << "Up";
                     break;
                 case MoveDirection::Down:
-                    visualizer->out << "Dir=Down\\n";
+                    visualizer->out << "Down";
                     break;
                 case MoveDirection::Left:
-                    visualizer->out << "Dir=Left\\n";
+                    visualizer->out << "Left";
                     break;
                 case MoveDirection::Right:
-                    visualizer->out << "Dir=Right\\n";
+                    visualizer->out << "Right";
                     break;
                 }
-                visualizer->out << "\"";
-                // Color actions in policy
-                if(actionSet.contains(action)){
+                visualizer->out << "(" << confidence(child) << ")\"";
+                // Color direction in policy
+                if(policy.contains(state) && (policy[state] == direction)){
                     visualizer->out << ", color=red";
                 }
                 visualizer->out << "]" << std::endl;
@@ -192,7 +226,8 @@ void Solver::visualize(unsigned int iteration, State* curState, const Map& map){
         visualizer->out << "\n\tadditional[label=\""
             << "alpha =" << alpha << "\\n"
             << "beta =" << beta << "\\n"
-            << "Box=" << maxIter << "\\n"
+            << "BoxMoveC=" << boxMoveCount << "\\n"
+            << "RestartC=" << restartCount << "\\n"
             << "Mi=" << maxIter << "\\n"
             << "i=" << iteration << "\\n"
         << "\",shape=note]" << std::endl;
