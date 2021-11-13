@@ -28,23 +28,85 @@ int main(int argc, char* const argv[])
     // }
     
     // FIXME: Hard-coded map
-    std::vector<std::string> level = {
-        "########",
-        "#. #   #",
-        "#  $   #",
-        "#   # ##",
-        "## # $.#",
-        "#   $  #",
-        "#  .# @#",
-        "########",
+    std::vector<std::vector<std::string>> levels = {
+        {
+            // Teacher
+            "########",
+            "#. #   #",
+            "#  $   #",
+            "#   # ##",
+            "## # $.#",
+            "#   $  #",
+            "#  .# @#",
+            "########",
+        },
+        {
+            // Medium
+            "##########",
+            "# ###### #",
+            "# #####. #",
+            "# #####  #",
+            "#  ### $ #",
+            "#@$    . #",
+            "# .# $.  #",
+            "# $####  #",
+            "#    #####",
+            "##########",
+        },
+        {
+            // Medium
+            "##########",
+            "# ###    #",
+            "# @## $. #",
+            "# $. .$$ #",
+            "#   # .  #",
+            "##########",
+        },
+        {
+            // Medium
+            "##########",
+            "###@######",
+            "# .$### ##",
+            "# $  . $ #",
+            "#    . $ #",
+            "## ## #  #",
+            "#####  # #",
+            "#### .#  #",
+            "####     #",
+            "##########",
+        },
+        {
+            // Hard
+            "#######",
+            "##### #",
+            "#@ ## #",
+            "# $   #",
+            "## $  #",
+            "#  #..#",
+            "# $$  #",
+            "# .  .#",
+            "#######",
+        },
+        {
+            // Hard
+            "##########",
+            "######   #",
+            "#######$ #",
+            "####### .#",
+            "#  ### $ #",
+            "#.$ #    #",
+            "#  @#  ###",
+            "# $ ##  ##",
+            "#  ..    #",
+            "##########",
+        },
     };
+    std::vector<std::string> &level = levels[5];
 
     // Create solver
     Solver solver(level, prefix, extension);
     // Solve
     std::vector<MoveDirection> policy = solver.solve();
-    // Optimize policy
-    policy = PolicyOptimize::optimize(level, policy);
     // Replay policy
     std::cout << "== Replay ==" << std::endl;
     std::vector<std::string> map(level);

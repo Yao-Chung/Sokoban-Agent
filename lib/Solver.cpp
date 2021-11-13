@@ -34,6 +34,14 @@ static inline std::string getBoxKey(const std::string& key){
     return key.substr(key.find("B:"));
 }
 
+static void printMap(const Map &map){
+    // Print map
+    for(std::string row: map){
+        std::cout << row << std::endl;
+    }
+    std::cout << std::endl;
+}
+
 std::vector<MoveDirection> Solver::solve(){
     clean();
     // Initialize current map and current state
@@ -44,6 +52,7 @@ std::vector<MoveDirection> Solver::solve(){
     // Visualize
     visualize(0, curState, map);
     for(unsigned int iteration=1; ; ++iteration){
+        // Check fresh state
         if(curState->childs.empty()){
             // Make actions
             for(MoveDirection dir: {
@@ -102,8 +111,6 @@ std::vector<MoveDirection> Solver::solve(){
             }
             // Check if curState is dead node
             if(curState->childs.empty()){
-                // Visualize
-                visualize(0, curState, map);
                 // Clean dead nodes
                 while (curState->childs.empty()){
                     if(curState->parent == nullptr){
@@ -140,14 +147,15 @@ std::vector<MoveDirection> Solver::solve(){
         // Move to the next state
         curState = nextState;
         map = move(map, nextDir, level);
-        // Visualize
-        visualize(0, curState, map);
         // Check if reach the maxIter
         if(iteration >= maxIter){
             // Update alpha, beta, maxIter
             alpha = (Decimal)maxIter / (Decimal)(restartCount + 1);
             beta = ((curState->finishTargets == 0) ? 1 : ((Decimal)maxIter / (Decimal)curState->finishTargets)) + (Decimal)boxMoveCount / (Decimal)maxIter;
             maxIter += deltaIter;
+            std::cerr << "MaxIter: " << maxIter << std::endl; 
+            // Visualize
+            visualize(0, curState, map);
             curState = restart(map, iteration, curState);
         }
     }
@@ -217,10 +225,6 @@ MoveDirection Solver::decide(const State* const state){
 
 void Solver::visualize(const unsigned int iteration, const State* const curState, const Map& map){
     if(visualizer.has_value()){
-        // Print map
-        for(std::string row: map){
-            std::cout << row << std::endl;
-        }
         // Copy policy to set
         std::unordered_set<const State*> policy;
         for(const State* cursor = curState; cursor != nullptr; cursor = cursor->parent){
@@ -228,7 +232,7 @@ void Solver::visualize(const unsigned int iteration, const State* const curState
         }
 
         // Prologue
-        visualizer->next(0);
+        visualizer->next(1);
         visualizer->out << std::string("digraph{") << std::endl;
         // Print states by BFS
         std::queue<State*> stateQueue;

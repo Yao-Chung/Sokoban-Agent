@@ -3,6 +3,5 @@ add_library(sokoban-agent
     Solver.cpp
     defines.cpp
     Visualizer.cpp
-    PolicyOptimize.cpp
     State.cpp
 )
