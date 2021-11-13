@@ -153,7 +153,8 @@ void Solver::visualize(const unsigned int iteration, const State* const curState
         visualizer->out << "\n\tadditional[label=\""
             << "alpha =" << alpha << "\\n"
             << "beta =" << beta << "\\n"
-            << "Box=" << maxIter << "\\n"
+            << "BoxMoveC=" << boxMoveCount << "\\n"
+            << "RestartC=" << restartCount << "\\n"
             << "Mi=" << maxIter << "\\n"
             << "i=" << iteration << "\\n"
         << "\",shape=note]" << std::endl;
