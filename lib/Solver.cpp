@@ -89,7 +89,7 @@ std::vector<MoveDirection> Solver::solve(){
         }
         // Get into a dead node
         if(curState->childs.empty()){
-            curState = restart(map, iteration);
+            curState = restart(map, iteration, curState);
             continue;
         }
         // Decide which direction to go
@@ -103,7 +103,7 @@ std::vector<MoveDirection> Solver::solve(){
             alpha = (Decimal)maxIter / (Decimal)restartCount;
             beta = (Decimal)maxIter / (Decimal)curState->finishTargets + (Decimal)boxMoveCount / (Decimal)maxIter;
             maxIter += 1;
-            curState = restart(map, iteration);
+            curState = restart(map, iteration, curState);
         }
     }
     // Calculate the winning path from curState
@@ -139,7 +139,11 @@ Decimal Solver::confidence(const State* const state){
     return (alpha / (Decimal) state->restartCost) + (beta / (Decimal)state->finishTargets);
 }
 
-State* Solver::restart(Map &map, unsigned int &iteration){
+State* Solver::restart(Map &map, unsigned int &iteration, State* curState){
+    while(curState != nullptr){
+        curState->restartCost += curState->distance;
+        curState = curState->parent;
+    }
     boxMoveCount = 0;
     restartCount += 1;
     iteration = 0;
