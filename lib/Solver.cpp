@@ -150,10 +150,16 @@ std::vector<MoveDirection> Solver::solve(){
         // Check if reach the maxIter
         if(iteration >= maxIter){
             // Update alpha, beta, maxIter
-            alpha = (Decimal)maxIter / (Decimal)(restartCount + 1);
+            alpha = (Decimal)std::sqrt(restartCount + 1);
             beta = ((curState->finishTargets == 0) ? 1 : ((Decimal)maxIter / (Decimal)curState->finishTargets)) + (Decimal)boxMoveCount / (Decimal)maxIter;
             maxIter += deltaIter;
-            std::cerr << "MaxIter: " << maxIter << std::endl; 
+            std::cerr << "MaxIter: " << maxIter << " Restart: " << restartCount
+                << " a: " << alpha
+                << " b: " << beta 
+                << " R: " << curState->restartCost
+                << " a/R: " << ((curState->restartCost > 0) ? (alpha / (Decimal)curState->restartCost) : 1)
+                << " b*T: " << beta * (Decimal)curState->finishTargets
+                << std::endl; 
             // Visualize
             visualize(0, curState, map);
             curState = restart(map, iteration, curState);

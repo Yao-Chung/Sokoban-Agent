@@ -4,7 +4,7 @@ State::State(unsigned int distance, Map map, State* parent, MoveDirection direct
     parent(parent),
     direction(direction),
     distance(distance),
-    restartCost(0),
+    restartCost(distance),
     finishTargets(0)
 {
     std::pair< Position, std::vector<Position> > positions(getPositions(map));
