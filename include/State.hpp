@@ -7,7 +7,7 @@
 
 struct State{
     State* parent;
-    std::unordered_map<MoveDirection, std::pair<State*, float>> childs;
+    std::unordered_map<MoveDirection, State*> childs;
     unsigned int distance;
     unsigned int restartCost;
     unsigned int finishTargets;
