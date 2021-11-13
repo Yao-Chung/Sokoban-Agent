@@ -9,7 +9,7 @@ public:
     Visualizer(std::string prefix, std::string extension);
     ~Visualizer();
     std::ofstream out;
-    void next();
+    void next(size_t advance  = 1);
 private:
     size_t page;
     std::string prefix, extension;
