@@ -3,13 +3,12 @@
 #include <string>
 #include <vector>
 
-Solver::Solver(const Map map):
-    map(map)
-{ 
-}
-
-Map Solver::getMap(){
-    return map;
+Solver::Solver(const Map level, std::string prefix, std::string extension):
+    level(level)
+{
+    if(!prefix.empty() || !extension.empty()){
+        visualizer.emplace(prefix, extension);
+    }
 }
 
 bool Solver::isWin(const Map& map){

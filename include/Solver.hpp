@@ -3,7 +3,6 @@
 
 #include <string>
 #include <vector>
-#include <optional>
 #include <random>
 #include <unordered_map>
 
@@ -13,7 +12,7 @@
 
 class Solver{
 public:
-    Solver(const Map level, std::optional<Visualizer> visualizer = std::nullopt);
+    Solver(const Map level, std::string prefix = "", std::string extension = "");
     std::vector<MoveDirection> solve();
 
 private:

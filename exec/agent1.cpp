@@ -6,34 +6,8 @@
 #include <unordered_map>
 #include <HttpClient.hpp>
 
-#include <MarklovSolver/MarklovSolver.hpp>
-#include <MarklovSolver/PolicyVisualizer.hpp>
+#include <Solver.hpp>
 #include <PolicyOptimize.hpp>
-
-static void printUsage(char const *argv0){
-    std::cerr << "Usage: " << argv0
-        << " <alpha_value>"
-        << " <beta_value>"
-        << " <gamma_value>"
-        << " <iter_value>"
-        << " <iter_delta_value>"
-    << "\n" << std::endl;
-}
-
-static std::unordered_map<std::string, std::any> parseArgs(int argc, char const *argv[]){
-    if(argc < 6){
-        std::cerr << "Error: Insufficient command-line arguments!" << std::endl;
-        printUsage(argv[0]);
-        std::exit(-1);
-    }
-    std::unordered_map<std::string, std::any> result;
-    result.emplace("alpha", (float)std::atof(argv[1]));
-    result.emplace("beta", (float)std::atof(argv[2]));
-    result.emplace("gamma", (float)std::atof(argv[3]));
-    result.emplace("iter", (unsigned int)std::atoi(argv[4]));
-    result.emplace("iter_delta", (unsigned int)std::atoi(argv[5]));
-    return result;
-}
 
 static void printMap(const Map& map){
     for(std::string row : map){
@@ -41,10 +15,8 @@ static void printMap(const Map& map){
     }
 }
 
-int main(int argc, char const *argv[])
+int main(void)
 {
-    // Parse command-line arguments
-    std::unordered_map<std::string, std::any> args(parseArgs(argc, argv));
     // Get map from server
     // HttpClient client("sokoban.luishsu.me", "80");
     // std::vector<std::string> map = client.start("sokoban01.txt");
@@ -64,16 +36,8 @@ int main(int argc, char const *argv[])
         "########",
     };
 
-    // Marklov solver
-    MarklovSolver solver(
-        std::any_cast<float>(args["alpha"]),
-        std::any_cast<float>(args["beta"]),
-        std::any_cast<float>(args["gamma"]),
-        std::any_cast<unsigned int>(args["iter"]),
-        std::any_cast<unsigned int>(args["iter_delta"]),
-        level
-    );
-    solver.attach_Visualizer("output/out", ".dot");
+    // Create solver
+    Solver solver(level);
     // Solve
     std::vector<MoveDirection> policy = solver.solve();
     // Optimize policy
@@ -99,8 +63,5 @@ int main(int argc, char const *argv[])
         }
         printMap(map);
     }
-    // Print States
-    PolicyVisualizer policyVisualizer("states", ".dot");
-    policyVisualizer.visualize(policy, solver.rootState);
     return 0;
 }
