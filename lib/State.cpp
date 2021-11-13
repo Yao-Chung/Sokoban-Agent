@@ -18,6 +18,6 @@ State::State(unsigned int distance, Map map, State* parent):
 
 State::~State(){
     for(auto p: childs){
-        delete p.second.first;
+        delete p.second;
     }
 }
