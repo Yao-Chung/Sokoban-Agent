@@ -4,7 +4,7 @@
 #include <queue>
 #include <vector>
 #include <iostream>
-#include <unordered_map>
+#include <unordered_set>
 
 #include <State.hpp>
 
@@ -39,88 +39,108 @@ std::vector<MoveDirection> Solver::solve(){
     State* curState = new State(0, map, nullptr, MoveDirection::Unspecified);
     root = curState;
     states[curState->key] = curState;
-    bool finished = false;
-    for(unsigned int iteration=1; !finished; ++iteration){
+    // Visualize
+    visualize(0, curState, map);
+    for(unsigned int iteration=1; ; ++iteration){
+        // Make actions
         for(MoveDirection dir: {
             MoveDirection::Up,
             MoveDirection::Down,
             MoveDirection::Left,
             MoveDirection::Right
         }){
-                Map newMap = move(map, dir, level);
-                std::string key = getKey(newMap);
-                // State exists
-                if(states.contains(key)){
-                    // It is parent or hit the wall (itself)
-                    if(curState->parent == states[key] || key == curState->key)
-                        continue;
-                    // Other state
-                    State *nextState = states[key];
-                    // A better way to next state
-                    if(curState->distance+1 < nextState->distance){
-                        // Cut the relation of next state and its parent
-                        State *nextStateParent = nextState->parent;
-                        for(auto p: nextStateParent->childs){
-                            if(p.second == nextState){
-                                nextStateParent->childs.erase(p.first);
-                                break;
-                            }
-                        }
-                        // Change the parent of next state
-                        nextState->parent = curState;
-                        // Add next state to current state's childs
-                        curState->childs[dir] = nextState;
-                    }
+            Map newMap = move(map, dir, level);
+            std::string key = getKey(newMap);
+            // State exists
+            if(states.contains(key)){
+                // It is parent or hit the wall (itself)
+                if(curState->parent == states[key] || key == curState->key){
+                    continue;
                 }
-                // It's a new state            
-                else{
-                    // Create new state and put into states
-                    State* nextState = new State(curState->distance+1, newMap, curState, dir);
+                // Other state
+                State *nextState = states[key];
+                nextState->distance = nextState->parent->distance + 1;
+                // A better way to next state
+                if(curState->distance + 1 < nextState->distance){
+                    // Cut the relation of next state and its parent
+                    State *nextParent = nextState->parent;
+                    nextParent->childs.erase(nextState->direction);
+                    // Change the parent of next state
+                    nextState->parent = curState;
+                    nextState->distance = curState->distance + 1;
+                    // Add next state to current state's childs
                     curState->childs[dir] = nextState;
-                    states[nextState->key] = nextState;
-                    // Check if win or not
-                    if(isWin(newMap)){
-                        // Let curState be the winning state
-                        finished = true;
-                        curState = nextState;
-                        break;
-                    }
                 }
+            }
+            // It's a new state            
+            else{
+                // Create new state and put into states
+                State* nextState = new State(curState->distance + 1, newMap, curState, dir);
+                curState->childs[dir] = nextState;
+                states[nextState->key] = nextState;
+                // Check if win or not
+                if(isWin(newMap)){
+                    // Visualize
+                    visualize(iteration, curState, newMap);
+                    // Calculate the winning path from curState
+                    curState = nextState;
+                    std::vector<MoveDirection> policy;
+                    while(curState != root){
+                        policy.emplace_back(curState->direction);
+                        curState = curState->parent;
+                    }
+                    std::reverse(policy.begin(), policy.end());
+                    return policy;
+                }
+            }
         }
-        // Get into a dead node
+        // Check if curState is dead node
         if(curState->childs.empty()){
+            // Visualize
+            visualize(0, curState, map);
+            // Clean dead nodes
+            while (curState->childs.empty()){
+                if(curState->parent == nullptr){
+                    // Unsolved
+                    return {};
+                }else{
+                    State* parent = curState->parent;
+                    parent->childs.erase(curState->direction);
+                    delete curState;
+                    curState = parent;
+                }
+            }
+            // Restart
             curState = restart(map, iteration, curState);
-            continue;
         }
-        // Decide which direction to go
-        MoveDirection nextDir = decide(curState);
-        // Move to the next state
-        curState = curState->childs[nextDir];
-        map = move(map, nextDir, level);
-        // Check if reach the maxIter
-        if(iteration >= maxIter){
-            // Update alpha, beta, maxIter
-            alpha = (Decimal)maxIter / (Decimal)restartCount;
-            beta = (Decimal)maxIter / (Decimal)curState->finishTargets + (Decimal)boxMoveCount / (Decimal)maxIter;
-            maxIter += 1;
-            curState = restart(map, iteration, curState);
+        else{
+            // Decide which direction to go
+            MoveDirection nextDir = decide(curState);
+            // Move to the next state
+            curState = curState->childs[nextDir];
+            map = move(map, nextDir, level);
+            // Visualize
+            visualize(0, curState, map);
+            // Check if reach the maxIter
+            if(iteration >= maxIter){
+                // Update alpha, beta, maxIter
+                alpha = (Decimal)maxIter / (Decimal)(restartCount + 1);
+                beta = ((curState->finishTargets == 0) ? 0 : ((Decimal)maxIter / (Decimal)curState->finishTargets)) + (Decimal)boxMoveCount / (Decimal)maxIter;
+                maxIter += 1;
+                curState = restart(map, iteration, curState);
+            }
         }
     }
-    // Calculate the winning path from curState
-    std::vector<MoveDirection> policy;
-    while(curState != root){
-        policy.emplace_back(curState->direction);
-        curState = curState->parent;
-    }
-    std::reverse(policy.begin(), policy.end());
-    return policy;
 }
 
 void Solver::clean(){
     boxMoveCount = 0;
     restartCount = 0;
-    // Clean allStates
+    alpha = 1;
+    beta = 1;
+    maxIter = 1;
     delete root;
+    root = nullptr;
     states.clear();
 }
 
@@ -136,7 +156,11 @@ bool Solver::isWin(const Map& map){
 
 Decimal Solver::confidence(const State* const state){
     // a / R + b / T
-    return (alpha / (Decimal) state->restartCost) + (beta / (Decimal)state->finishTargets);
+    Decimal result = alpha / (Decimal) state->restartCost;
+    if(state->finishTargets > 0){
+        result += beta / (Decimal)state->finishTargets;
+    }
+    return result;
 }
 
 State* Solver::restart(Map &map, unsigned int &iteration, State* curState){
@@ -178,15 +202,13 @@ void Solver::visualize(const unsigned int iteration, const State* const curState
             std::cout << row << std::endl;
         }
         // Copy policy to set
-        std::unordered_map<State*, MoveDirection> policy;
-        for(const State* cursor = curState; cursor != nullptr && cursor->parent != nullptr; cursor = cursor->parent){
-            for(auto [direction, child]: cursor->parent->childs){
-                if(child == cursor){
-                    policy.emplace(cursor->parent, direction);
-                }
-            }
+        std::unordered_set<const State*> policy;
+        for(const State* cursor = curState; cursor != nullptr; cursor = cursor->parent){
+            policy.insert(cursor);
         }
+
         // Prologue
+        visualizer->next(0);
         visualizer->out << std::string("digraph{") << std::endl;
         // Print states by BFS
         std::queue<State*> stateQueue;
@@ -207,6 +229,7 @@ void Solver::visualize(const unsigned int iteration, const State* const curState
             visualizer->out << "]" << std::endl;
             // Print actions
             for(auto [direction, child]: state->childs){
+                stateQueue.push(child);
                 visualizer->out << "\tm" << state << " -> m" << child << "[label=\"";
                 switch (direction){
                 case MoveDirection::Up:
@@ -226,7 +249,7 @@ void Solver::visualize(const unsigned int iteration, const State* const curState
                 }
                 visualizer->out << "(" << confidence(child) << ")\"";
                 // Color direction in policy
-                if(policy.contains(state) && (policy[state] == direction)){
+                if(policy.contains(child)){
                     visualizer->out << ", color=red";
                 }
                 visualizer->out << "]" << std::endl;

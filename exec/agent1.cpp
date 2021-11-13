@@ -1,11 +1,8 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <any>
-#include <cstdlib>
-#include <unordered_map>
-#include <HttpClient.hpp>
 
+#include <HttpClient.hpp>
 #include <Solver.hpp>
 #include <PolicyOptimize.hpp>
 
@@ -15,8 +12,14 @@ static void printMap(const Map& map){
     }
 }
 
-int main(void)
+int main(int argc, char* const argv[])
 {
+    std::string prefix, extension;
+    if(argc > 1){
+        prefix = argv[1];
+        extension = ".dot";
+    }
+
     // Get map from server
     // HttpClient client("sokoban.luishsu.me", "80");
     // std::vector<std::string> map = client.start("sokoban01.txt");
@@ -37,7 +40,7 @@ int main(void)
     };
 
     // Create solver
-    Solver solver(level);
+    Solver solver(level, prefix, extension);
     // Solve
     std::vector<MoveDirection> policy = solver.solve();
     // Optimize policy
