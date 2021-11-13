@@ -108,7 +108,11 @@ std::vector<MoveDirection> Solver::solve(){
     }
     // Calculate the winning path from curState
     std::vector<MoveDirection> policy;
-    
+    while(curState != root){
+        policy.emplace_back(curState->direction);
+        curState = curState->parent;
+    }
+    std::reverse(policy.begin(), policy.end());
     return policy;
 }
 
