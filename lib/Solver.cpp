@@ -8,6 +8,8 @@
 
 #include <State.hpp>
 
+#define deltaIter 1
+
 Solver::Solver(const Map level, std::string prefix, std::string extension):
     alpha(1),
     beta(1),
@@ -60,7 +62,9 @@ std::vector<MoveDirection> Solver::solve(){
                     }
                     // Other state
                     State *nextState = states[key];
-                    nextState->distance = nextState->parent->distance + 1;
+                    if(nextState->parent != nullptr){
+                        nextState->distance = nextState->parent->distance + 1;
+                    }
                     // A better way to next state
                     if(curState->distance + 1 < nextState->distance){
                         // Cut the relation of next state and its parent
@@ -120,12 +124,21 @@ std::vector<MoveDirection> Solver::solve(){
         }
         // Decide which direction to go
         MoveDirection nextDir = decide(curState);
+        State* nextState = curState->childs[nextDir];
         // Update boxMoveCount
-        if(getBoxKey(curState->key) != getBoxKey(curState->childs[nextDir]->key)){
+        if(getBoxKey(curState->key) != getBoxKey(nextState->key)){
             boxMoveCount += 1;
         }
+        // Update finishedTargets
+        if(curState->finishTargets < nextState->finishTargets){
+            for(State* cur = curState; cur != nullptr; cur = cur->parent){
+                if(cur->finishTargets < nextState->finishTargets){
+                    cur->finishTargets = nextState->finishTargets;
+                }
+            }
+        }
         // Move to the next state
-        curState = curState->childs[nextDir];
+        curState = nextState;
         map = move(map, nextDir, level);
         // Visualize
         visualize(0, curState, map);
@@ -133,8 +146,8 @@ std::vector<MoveDirection> Solver::solve(){
         if(iteration >= maxIter){
             // Update alpha, beta, maxIter
             alpha = (Decimal)maxIter / (Decimal)(restartCount + 1);
-            beta = ((curState->finishTargets == 0) ? 0 : ((Decimal)maxIter / (Decimal)curState->finishTargets)) + (Decimal)boxMoveCount / (Decimal)maxIter;
-            maxIter += 1;
+            beta = ((curState->finishTargets == 0) ? 1 : ((Decimal)maxIter / (Decimal)curState->finishTargets)) + (Decimal)boxMoveCount / (Decimal)maxIter;
+            maxIter += deltaIter;
             curState = restart(map, iteration, curState);
         }
     }
@@ -165,7 +178,7 @@ Decimal Solver::confidence(const State* const state){
     // a / R + b / T
     Decimal result = (state->restartCost > 0) ? (alpha / (Decimal) state->restartCost) : 1;
     if(state->finishTargets > 0){
-        result += beta / (Decimal)state->finishTargets;
+        result += beta * (Decimal)state->finishTargets;
     }
     return result;
 }
