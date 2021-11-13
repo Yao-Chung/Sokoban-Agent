@@ -28,6 +28,7 @@ private:
     std::optional<Visualizer> visualizer;
 
     bool isWin(const Map& map);
+    void clean();
 };
 
 #endif
