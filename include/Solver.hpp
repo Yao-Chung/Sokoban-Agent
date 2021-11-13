@@ -29,6 +29,7 @@ private:
 
     bool isWin(const Map& map);
     Decimal confidence(const State* const state);
+    MoveDirection decide(const State* const state);
     void visualize(const unsigned int iteration, const State* const curState, const Map& map);
     void clean();
 };

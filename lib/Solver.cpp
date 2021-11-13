@@ -1,14 +1,24 @@
 #include <Solver.hpp>
-#include <State.hpp>
+
 #include <string>
 #include <queue>
 #include <vector>
 #include <iostream>
 #include <unordered_map>
 
+#include <State.hpp>
+
 Solver::Solver(const Map level, std::string prefix, std::string extension):
-    level(level)
+    alpha(1),
+    beta(1),
+    maxIter(1),
+    boxMoveCount(0),
+    restartCount(0),
+    root(nullptr),
+    level(level),
+    random_generator(std::random_device()())
 {
+    // Attach visualizer
     if(!prefix.empty() || !extension.empty()){
         visualizer.emplace(prefix, extension);
     }
@@ -42,6 +52,7 @@ void Solver::clean(){
 }
 
 bool Solver::isWin(const Map& map){
+    // $ shouldn't exist
     for(std::string row: map){
         if(row.find('$') != std::string::npos){
             return false;
@@ -51,7 +62,28 @@ bool Solver::isWin(const Map& map){
 }
 
 Decimal Solver::confidence(const State* const state){
+    // a / R + b / T
     return (alpha / (Decimal) state->restartCost) + (beta / (Decimal)state->finishTargets);
+}
+
+MoveDirection Solver::decide(const State* const state){
+    // Calculate confidences and sum
+    std::vector<std::pair<Decimal, MoveDirection>> possibilities;
+    Decimal sum = 0;
+    for(auto [direction, child]: state->childs){
+        std::pair<Decimal, MoveDirection> &pair = possibilities.emplace_back(confidence(child), direction);
+        sum += pair.first;
+    }
+    // Generate random float number between 0 to 1
+    Decimal choice = std::generate_canonical<Decimal, sizeof(Decimal) * 8>(random_generator);
+    // Make decision 
+    for(auto [conf, dir]: possibilities){
+        choice -= conf;
+        if(choice <= 0){
+            return dir;
+        }
+    }
+    return possibilities.back().second;
 }
 
 void Solver::visualize(const unsigned int iteration, const State* const curState, const Map& map){
