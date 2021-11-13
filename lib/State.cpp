@@ -1,7 +1,11 @@
 #include <State.hpp>
 
-State::State(unsigned int distance, Map map, State* parent):
-    parent(parent), distance(distance), restartCost(0), finishTargets(0)
+State::State(unsigned int distance, Map map, State* parent, MoveDirection direction):
+    parent(parent),
+    direction(direction),
+    distance(distance),
+    restartCost(0),
+    finishTargets(0)
 {
     std::pair< Position, std::vector<Position> > positions(getPositions(map));
     manPosition = positions.first;

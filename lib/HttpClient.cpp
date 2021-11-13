@@ -135,6 +135,8 @@ std::pair<bool, Map> HttpClient::move(MoveDirection direction){
         case MoveDirection::Down:
             url += "3";
             break;
+        default:
+        break;
     }
     // Request
     std::string body = send_request(url);

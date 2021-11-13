@@ -70,6 +70,8 @@ Map move(const Map& map, const MoveDirection direction, const Map& level){
             fwdX += 1;
             ffwdX += 2;
         break;
+        default:
+        break;
     }
     // Out of bound
     if((fwdX < 0) || (fwdY < 0) || (fwdX >= map[0].size()) || (fwdY >= map.size())){

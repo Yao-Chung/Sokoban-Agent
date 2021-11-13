@@ -9,6 +9,7 @@ enum MoveDirection{
     Right = 1,
     Up = 2,
     Down = 3,
+    Unspecified = -1,
 };
 
 using Map = std::vector<std::string>;

@@ -34,7 +34,6 @@ private:
     void visualize(const unsigned int iteration, const State* const curState, const Map& map);
     void clean();
     State* restart(Map &map, unsigned int &iteration);
-    MoveDirection decide(const State* const state);
 };
 
 #endif

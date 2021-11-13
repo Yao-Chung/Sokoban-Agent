@@ -60,6 +60,8 @@ int main(void)
             case MoveDirection::Right:
                 std::cout << "Right" << std::endl;
             break;
+            default:
+            break;
         }
         printMap(map);
     }

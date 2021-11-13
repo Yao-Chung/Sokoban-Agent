@@ -8,6 +8,8 @@
 struct State{
     State* parent;
     std::unordered_map<MoveDirection, State*> childs;
+    
+    MoveDirection direction;
     unsigned int distance;
     unsigned int restartCost;
     unsigned int finishTargets;
@@ -16,7 +18,7 @@ struct State{
     std::string key;
 
     State() = default;
-    State(unsigned int distance, Map map, State* parent);
+    State(unsigned int distance, Map map, State* parent, MoveDirection direction);
     ~State();
 };
 

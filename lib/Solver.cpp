@@ -36,7 +36,7 @@ std::vector<MoveDirection> Solver::solve(){
     clean();
     // Initialize current map and current state
     Map map = level;
-    State* curState = new State(0, map, nullptr);
+    State* curState = new State(0, map, nullptr, MoveDirection::Unspecified);
     root = curState;
     states[curState->key] = curState;
     bool finished = false;
@@ -75,7 +75,7 @@ std::vector<MoveDirection> Solver::solve(){
                 // It's a new state            
                 else{
                     // Create new state and put into states
-                    State* nextState = new State(curState->distance+1, newMap, curState);
+                    State* nextState = new State(curState->distance+1, newMap, curState, dir);
                     curState->childs[dir] = nextState;
                     states[nextState->key] = nextState;
                     // Check if win or not
@@ -213,6 +213,8 @@ void Solver::visualize(const unsigned int iteration, const State* const curState
                 case MoveDirection::Right:
                     visualizer->out << "Right";
                     break;
+                default:
+                break;
                 }
                 visualizer->out << "(" << confidence(child) << ")\"";
                 // Color direction in policy
