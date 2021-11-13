@@ -16,8 +16,8 @@ public:
     std::vector<MoveDirection> solve();
 
 private:
-    float alpha;
-    float beta;
+    Decimal alpha;
+    Decimal beta;
     unsigned int maxIter;
     unsigned int boxMoveCount;
     unsigned int restartCount;
@@ -28,6 +28,8 @@ private:
     std::optional<Visualizer> visualizer;
 
     bool isWin(const Map& map);
+    Decimal confidence(const State* const state);
+    void visualize(const unsigned int iteration, const State* const curState, const Map& map);
 };
 
 #endif

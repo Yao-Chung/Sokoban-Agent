@@ -13,6 +13,7 @@ enum MoveDirection{
 
 using Map = std::vector<std::string>;
 using Position = std::pair<int, int>;
+using Decimal = float;
 
 std::string getKey(const Map map);
 std::string getKey(const Position manPos, const std::vector<Position> boxPos);
