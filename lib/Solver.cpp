@@ -24,6 +24,10 @@ Solver::Solver(const Map level, std::string prefix, std::string extension):
     }
 }
 
+Solver::~Solver(){
+    delete root;
+}
+
 static inline std::string getBoxKey(const std::string& key){
     return key.substr(key.find("B:"));
 }

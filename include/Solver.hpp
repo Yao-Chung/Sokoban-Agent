@@ -14,6 +14,7 @@ class Solver{
 public:
     Solver(const Map level, std::string prefix = "", std::string extension = "");
     std::vector<MoveDirection> solve();
+    ~Solver();
 
 private:
     Decimal alpha;
