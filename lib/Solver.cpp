@@ -120,6 +120,10 @@ std::vector<MoveDirection> Solver::solve(){
         }
         // Decide which direction to go
         MoveDirection nextDir = decide(curState);
+        // Update boxMoveCount
+        if(getBoxKey(curState->key) != getBoxKey(curState->childs[nextDir]->key)){
+            boxMoveCount += 1;
+        }
         // Move to the next state
         curState = curState->childs[nextDir];
         map = move(map, nextDir, level);
