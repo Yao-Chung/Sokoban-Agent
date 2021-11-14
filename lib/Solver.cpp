@@ -189,7 +189,7 @@ bool Solver::isWin(const Map& map){
 }
 
 Decimal Solver::confidence(const State* const state){
-    // a / R + b / T
+    // a / R + b * T
     Decimal result = (state->restartCost > 0) ? (alpha / (Decimal) state->restartCost) : 1;
     if(state->finishTargets > 0){
         result += beta * (Decimal)state->finishTargets;
