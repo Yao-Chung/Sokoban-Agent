@@ -2,6 +2,6 @@
 #include <iostream>
 
 int main() {
-  torch::Tensor tensor = torch::eye(3);
+  torch::Tensor tensor = torch::rand({2,3});
   std::cout << tensor << std::endl;
 }
