@@ -1,6 +1,7 @@
 #include <defines.hpp>
 
 #include <sstream>
+#include <fstream>
 
 std::string getKey(const Map map){
     std::pair< Position, std::vector<Position> > positions = getPositions(map);
@@ -103,4 +104,32 @@ Map move(const Map& map, const MoveDirection direction, const Map& level){
     result[fwdY][fwdX] = '@';
     result[manY][manX] = ((level[manY][manX] == '.') || (level[manY][manX] == '%')) ? '.' : ' ';
     return result;
+}
+
+std::vector< std::pair<Map, std::vector<MoveDirection>> > read_solutions(std::string filename){
+    // Open file in binary mode
+    std::ifstream fin(filename, std::ios::binary);
+    // Read solutions
+    std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions;
+    while(!fin.eof()){
+        std::pair<Map, std::vector<MoveDirection>> solution = solutions.emplace_back();
+        int32_t rows, cols;
+        // Read row & column
+        fin >> rows >> cols;
+        // Read map
+        solution.first.resize(rows);
+        for(int32_t i = 0; i < rows; ++i){
+            solution.first[i].resize(cols);
+            fin.read(solution.first[i].data(), cols);
+        }
+        // Read policy size
+        int32_t pSize;
+        fin >> pSize;
+        // Read policy
+        solution.second.resize(pSize);
+        fin.read((char*)solution.second.data(), sizeof(MoveDirection) * pSize);
+    }
+    // Close file
+    fin.close();
+    return solutions;
 }
