@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <random>
+#include <optional>
 #include <unordered_map>
 
 #include <defines.hpp>
