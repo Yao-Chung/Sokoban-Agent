@@ -140,12 +140,17 @@ int main(int argc, char* const argv[])
             "##########",
         }
     };
-    std::vector<std::string> &level = levels[8];
+    std::vector<std::string> &level = levels[0];
 
     // Create solver
     Solver solver(level, prefix, extension);
     // Solve
     std::vector<MoveDirection> policy = solver.solve();
+    std:: cout << "=== Finished ===" << std::endl;
+    std:: cout << "policy size = " << policy.size() << std::endl;
+    // Write solution to file
+    write_solution("solution1.txt", level, policy);
+    
     // Replay policy
     std::cout << "== Replay ==" << std::endl;
     std::vector<std::string> map(level);

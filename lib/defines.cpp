@@ -1,5 +1,5 @@
 #include <defines.hpp>
-
+#include <cstdio>
 #include <sstream>
 #include <fstream>
 
@@ -132,4 +132,23 @@ std::vector< std::pair<Map, std::vector<MoveDirection>> > read_solutions(std::st
     // Close file
     fin.close();
     return solutions;
+}
+
+void write_solution(const std::string filename, const Map& map, const std::vector<MoveDirection> &policy){
+    // Open the file
+    std::FILE* fp = std::fopen(filename.c_str(), "wb");
+    // Write row and column length to file
+    int32_t rows = map.size();
+    int32_t cols = map[0].size();
+    fwrite(&rows, sizeof(int32_t), 1, fp);
+    fwrite(&cols, sizeof(int32_t), 1, fp);
+    // Write map to file
+    for(std::string row: map){
+        fwrite(row.c_str(), sizeof(char), row.size(), fp);
+    }
+    // Write policy size to file
+    int32_t policy_size = policy.size();
+    fwrite(&policy_size, sizeof(policy_size), 1, fp);
+    // Write policy to file
+    fwrite(policy.data(), sizeof(MoveDirection), policy.size(), fp);
 }
