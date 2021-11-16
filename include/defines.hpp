@@ -20,5 +20,6 @@ std::string getKey(const Map map);
 std::string getKey(const Position manPos, const std::vector<Position> boxPos);
 std::pair< Position, std::vector<Position> > getPositions(const Map map);
 Map move(const Map& map, const MoveDirection direction, const Map& level);
+void write_solution(const std::string filename, const Map& map, const std::vector<MoveDirection>& policy);
 
 #endif
