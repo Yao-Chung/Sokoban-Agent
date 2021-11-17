@@ -18,7 +18,7 @@ public:
     Trainer(/*TODO: weights*/);
     ~Trainer();
     std::vector<Decimal> suggest(const Map map);
-    void train(std::vector< std::pair<Map, MoveDirection> > steps);
+    void train(Map map, std::vector<MoveDirection> policy);
 private:
     torch::Tensor extract(const Map map);
     Net net;

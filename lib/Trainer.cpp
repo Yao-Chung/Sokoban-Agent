@@ -38,8 +38,20 @@ std::vector<Decimal> Trainer::suggest(const Map map){
     return result;
 }
 
-void Trainer::train(std::vector< std::pair<Map, MoveDirection> > steps){
-
+void Trainer::train(Map map, std::vector<MoveDirection> policy){
+    // Add optimizer
+    torch::optim::Adam optimizer = torch::optim::Adam(net.parameters(), torch::optim::AdamOptions(1e-3));
+    // Save the original map
+    Map level = map;
+    for(MoveDirection dir: policy){
+        std::vector<Decimal> answer(4);
+        answer[dir] = 1.0;
+        std::vector<Decimal> predict = suggest(map);
+        // Calculate loss
+        
+        // Move to another state
+        map = move(map, dir, level);
+    }
 }
 
 torch::Tensor Trainer::extract(const Map map){
