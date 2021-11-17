@@ -4,4 +4,5 @@ add_library(sokoban-agent
     defines.cpp
     Visualizer.cpp
     State.cpp
+    Trainer.cpp
 )
