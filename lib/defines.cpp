@@ -112,22 +112,25 @@ std::vector< std::pair<Map, std::vector<MoveDirection>> > read_solutions(std::st
     // Read solutions
     std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions;
     while(!fin.eof()){
-        std::pair<Map, std::vector<MoveDirection>> solution = solutions.emplace_back();
         int32_t rows, cols;
         // Read row & column
-        fin >> rows >> cols;
+        fin.read((char*)&rows, sizeof(int32_t));
+        fin.read((char*)&cols, sizeof(int32_t));
         // Read map
-        solution.first.resize(rows);
+        Map map(rows);
         for(int32_t i = 0; i < rows; ++i){
-            solution.first[i].resize(cols);
-            fin.read(solution.first[i].data(), cols);
+            map[i].resize(cols);
+            fin.read(map[i].data(), cols);
         }
         // Read policy size
         int32_t pSize;
-        fin >> pSize;
+        fin.read((char*)&pSize, sizeof(int32_t));
         // Read policy
-        solution.second.resize(pSize);
-        fin.read((char*)solution.second.data(), sizeof(MoveDirection) * pSize);
+        std::vector<MoveDirection> policy(pSize);
+        fin.read((char*)policy.data(), sizeof(MoveDirection) * pSize);
+        // Push to solution
+        solutions.emplace_back(map, policy);
+        fin.peek();
     }
     // Close file
     fin.close();
@@ -136,7 +139,7 @@ std::vector< std::pair<Map, std::vector<MoveDirection>> > read_solutions(std::st
 
 void write_solution(const std::string filename, const Map& map, const std::vector<MoveDirection> &policy){
     // Open the file
-    std::FILE* fp = std::fopen(filename.c_str(), "wb");
+    std::FILE* fp = std::fopen(filename.c_str(), "ab");
     // Write row and column length to file
     int32_t rows = map.size();
     int32_t cols = map[0].size();
@@ -151,4 +154,5 @@ void write_solution(const std::string filename, const Map& map, const std::vecto
     fwrite(&policy_size, sizeof(policy_size), 1, fp);
     // Write policy to file
     fwrite(policy.data(), sizeof(MoveDirection), policy.size(), fp);
+    fclose(fp);
 }
