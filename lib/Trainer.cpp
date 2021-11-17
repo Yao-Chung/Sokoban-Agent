@@ -1,6 +1,7 @@
 #include <Trainer.hpp>
 
 #include <vector>
+#include <filesystem>
 
 Net::Net():
     conv1(torch::nn::Conv2dOptions(4, 8, 5).stride(1)),
@@ -23,12 +24,14 @@ torch::Tensor Net::forward(torch::Tensor input){
     return torch::softmax(input, 0);
 }
 
-Trainer::Trainer(/*TODO: weights*/){
-
-}
-
-Trainer::~Trainer(){
-
+Trainer::Trainer(std::string filename):
+    filename(filename)
+{
+    if(std::filesystem::exists(filename)){
+        torch::serialize::InputArchive input;
+        input.load_from(filename);
+        net.load(input);
+    }
 }
 
 std::vector<Decimal> Trainer::suggest(const Map map){
@@ -98,4 +101,10 @@ torch::Tensor Trainer::extract(const Map map){
     return torch::tensor(
         std::vector<Decimal>(std::begin(data.input1D), std::end(data.input1D)))
         .reshape({1, 4, 9, 9});
+}
+
+void Trainer::save(){
+    torch::serialize::OutputArchive output;
+    net.save(output);
+    output.save_to(filename);
 }

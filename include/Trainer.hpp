@@ -15,13 +15,14 @@ struct Net: torch::nn::Module{
 
 class Trainer{
 public:
-    Trainer(/*TODO: weights*/);
-    ~Trainer();
+    Trainer(std::string filename);
     std::vector<Decimal> suggest(const Map map);
     void train(Map map, std::vector<MoveDirection> policy);
+    void save();
 private:
     torch::Tensor extract(const Map map);
     Net net;
+    const std::string filename;
 };
 
 #endif
