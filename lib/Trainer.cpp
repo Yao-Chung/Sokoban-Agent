@@ -2,6 +2,27 @@
 
 #include <vector>
 
+Net::Net():
+    conv1(torch::nn::Conv2dOptions(4, 8, 5).stride(1)),
+    conv2(torch::nn::Conv2dOptions(8, 16, 3).stride(1)),
+    fc1(torch::nn::LinearOptions(144, 64).bias(false)),
+    fc2(torch::nn::LinearOptions(64, 4).bias(false))
+{
+    register_module("conv1", conv1);
+    register_module("conv2", conv2);
+    register_module("fc1", fc1);
+    register_module("fc2", fc2);
+}
+
+torch::Tensor Net::forward(torch::Tensor input){
+    input = torch::relu(conv1(input));
+    input = torch::relu(conv2(input));
+    input = torch::flatten(input);
+    input = torch::relu(fc1(input));
+    input = fc2(input);
+    return torch::softmax(input, 0);
+}
+
 Trainer::Trainer(/*TODO: weights*/){
 
 }
@@ -11,7 +32,10 @@ Trainer::~Trainer(){
 }
 
 std::vector<Decimal> Trainer::suggest(const Map map){
-
+    std::vector<Decimal> result(4);
+    torch::Tensor output = net.forward(extract(map));
+    memcpy(result.data(), output.data_ptr<Decimal>(), sizeof(Decimal) * 4);
+    return result;
 }
 
 void Trainer::train(std::vector< std::pair<Map, MoveDirection> > steps){
@@ -61,5 +85,5 @@ torch::Tensor Trainer::extract(const Map map){
     // Convert to tensor
     return torch::tensor(
         std::vector<Decimal>(std::begin(data.input1D), std::end(data.input1D)))
-        .reshape({4, 9, 9});
+        .reshape({1, 4, 9, 9});
 }

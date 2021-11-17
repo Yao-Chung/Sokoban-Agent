@@ -6,14 +6,22 @@
 #include <defines.hpp>
 #include <torch/torch.h>
 
+struct Net: torch::nn::Module{
+    Net();
+    torch::Tensor forward(torch::Tensor input);
+    torch::nn::Conv2d conv1, conv2;
+    torch::nn::Linear fc1, fc2;
+};
+
 class Trainer{
 public:
     Trainer(/*TODO: weights*/);
     ~Trainer();
     std::vector<Decimal> suggest(const Map map);
     void train(std::vector< std::pair<Map, MoveDirection> > steps);
-    torch::Tensor extract(const Map map);
 private:
+    torch::Tensor extract(const Map map);
+    Net net;
 };
 
 #endif

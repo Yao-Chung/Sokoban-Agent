@@ -14,6 +14,6 @@ int main(int argc, char const *argv[])
     std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions = read_solutions(argv[1]);
     // Create Trainer
     Trainer trainer;
-    std::cout << trainer.extract(solutions[0].first) << std::endl;
+    std::vector<Decimal> suggest = trainer.suggest(solutions[1].first);
     return 0;
 }
