@@ -49,9 +49,15 @@ void Trainer::train(Map map, std::vector<MoveDirection> policy){
     for(MoveDirection dir: policy){
         std::vector<Decimal> answer(4);
         answer[dir] = 1.0;
-        std::vector<Decimal> predict = suggest(map);
+        torch::Tensor correct_ans = torch::tensor(answer);
+        torch::Tensor predict = net.forward(extract(map));
         // Calculate loss
-        
+        torch::Tensor loss = torch::nn::functional::cross_entropy(correct_ans, predict);
+        std::cout << loss << std::endl;
+        // update parameters
+        loss.backward();
+        optimizer.step();
+        optimizer.zero_grad();
         // Move to another state
         map = move(map, dir, level);
     }
