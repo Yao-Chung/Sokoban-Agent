@@ -16,6 +16,8 @@ int main(int argc, char const *argv[])
     Trainer trainer(argv[2]);
     // Give suggestion
     std::vector<Decimal> suggest = trainer.suggest(solutions[1].first);
+    // Train model
+    trainer.train(solutions[0].first, solutions[0].second);
     // Save model
     trainer.save();
     return 0;

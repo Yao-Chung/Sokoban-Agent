@@ -1,6 +1,7 @@
 #include <Trainer.hpp>
 
 #include <vector>
+#include <valarray>
 #include <filesystem>
 
 Net::Net():
@@ -41,25 +42,38 @@ std::vector<Decimal> Trainer::suggest(const Map map){
     return result;
 }
 
-void Trainer::train(Map map, std::vector<MoveDirection> policy){
+void Trainer::train(Map level, std::vector<MoveDirection> policy){
     // Add optimizer
     torch::optim::Adam optimizer = torch::optim::Adam(net.parameters(), torch::optim::AdamOptions(1e-3));
-    // Save the original map
-    Map level = map;
-    for(MoveDirection dir: policy){
-        std::vector<Decimal> answer(4);
-        answer[dir] = 1.0;
-        torch::Tensor correct_ans = torch::tensor(answer);
-        torch::Tensor predict = net.forward(extract(map));
-        // Calculate loss
-        torch::Tensor loss = torch::nn::functional::cross_entropy(correct_ans, predict);
-        std::cout << loss << std::endl;
-        // update parameters
-        loss.backward();
-        optimizer.step();
-        optimizer.zero_grad();
-        // Move to another state
-        map = move(map, dir, level);
+    // Training
+    Decimal lastAvgLoss = 0.0;
+    for(size_t epo = 0; epo < epoch; ++epo){
+        Decimal avgLoss = 0.0;
+        for(size_t bat = 0; bat < batch; ++bat){
+            // Save the original map
+            Map map = level;
+            for(MoveDirection dir: policy){
+                std::vector<Decimal> answerVec(4);
+                answerVec[dir] = 1.0;
+                torch::Tensor answer = torch::tensor(answerVec).reshape({1, 4});
+                torch::Tensor predict = net.forward(extract(map)).reshape({1, 4});
+                // Calculate loss
+                torch::Tensor loss = torch::nn::functional::cross_entropy(answer, predict);
+                avgLoss += *loss.data_ptr<Decimal>();
+                // update parameters
+                loss.backward();
+                optimizer.step();
+                optimizer.zero_grad();
+                // Move to another state
+                map = move(map, dir, level);
+            }
+        }
+        avgLoss /= (Decimal) (batch * policy.size());
+        std::cout << "[" << epo << "] Avg loss: " << avgLoss << " abs: " << std::abs(avgLoss - lastAvgLoss) << std::endl;
+        if(std::abs(avgLoss - lastAvgLoss) < threshold){
+            break;
+        }
+        lastAvgLoss = avgLoss;
     }
 }
 

@@ -6,6 +6,10 @@
 #include <defines.hpp>
 #include <torch/torch.h>
 
+#define epoch 10
+#define batch 50
+#define threshold 0.000001
+
 struct Net: torch::nn::Module{
     Net();
     torch::Tensor forward(torch::Tensor input);
@@ -17,7 +21,7 @@ class Trainer{
 public:
     Trainer(std::string filename);
     std::vector<Decimal> suggest(const Map map);
-    void train(Map map, std::vector<MoveDirection> policy);
+    void train(Map level, std::vector<MoveDirection> policy);
     void save();
 private:
     torch::Tensor extract(const Map map);
