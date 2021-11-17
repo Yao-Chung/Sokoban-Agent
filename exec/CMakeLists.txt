@@ -10,4 +10,5 @@ add_executable(trainer1
 )
 target_link_libraries(trainer1
     sokoban-agent
+    ${TORCH_LIBRARIES}
 )
