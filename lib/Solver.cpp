@@ -213,16 +213,21 @@ State* Solver::restart(Map &map, unsigned int &iteration, State* curState){
 MoveDirection Solver::decide(const State* const state, const Map map){
     // Calculate confidences and sum
     std::vector<std::pair<Decimal, MoveDirection>> possibilities;
+    std::vector<Decimal> suggestions(4);
+
     Decimal sum = 0;
+    Decimal expert_sum = 0;
     for(auto [direction, child]: state->childs){
         std::pair<Decimal, MoveDirection> &pair = possibilities.emplace_back(confidence(child), direction);
         sum += pair.first;
+        expert_sum += child->suggestion;
+        suggestions[direction] = child->suggestion;
     }
     // Generate random float number between 0 to 1
     Decimal choice = std::generate_canonical<Decimal, sizeof(Decimal) * 8>(random_generator);
     // Make decision 
     for(auto [conf, dir]: possibilities){
-        choice -= (conf / sum);
+        choice -= ((1-gamma)*(conf / sum) + gamma*(suggestions[dir] / expert_sum));
         if(choice <= 0){
             return dir;
         }
