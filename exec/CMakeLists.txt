@@ -5,7 +5,9 @@ target_link_libraries(agent1
     sokoban-agent
     ${TORCH_LIBRARIES}
 )
-
+add_executable(extract
+    extract.cpp
+)
 add_executable(trainer1
     trainer1.cpp
 )
