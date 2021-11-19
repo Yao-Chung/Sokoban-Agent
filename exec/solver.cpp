@@ -15,14 +15,15 @@ static void printMap(const Map& map){
 int main(int argc, char* const argv[])
 {
     std::string prefix, extension, mapPath, netPath, solutionPath;
-    size_t mapId = 0;
-    if(argc < 4){
-        std::cerr << "Usage: " << argv[0] << " <map_file> <solution_file> <net_file>" << std::endl;
+    if(argc < 3){
+        std::cerr << "Usage: " << argv[0] << " <map_file> <solution_file> [net_file] [dot_file_prefix]" << std::endl;
         return -1;
     }else{
         mapPath = argv[1];
         solutionPath = argv[2];
-        netPath = argv[3];
+        if(argc > 3){
+            netPath = argv[3];
+        }
         if(argc > 4){
             prefix = argv[4];
             extension = ".dot";

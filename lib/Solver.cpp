@@ -12,18 +12,22 @@
 Solver::Solver(const Map level, std::string cnnPath, std::string prefix, std::string extension):
     alpha(1),
     beta(1),
-    gamma(1),
     maxIter(1),
     boxMoveCount(0),
     restartCount(0),
     root(nullptr),
     level(level),
-    random_generator(std::random_device()()),
-    trainer(cnnPath)
+    random_generator(std::random_device()())
 {
     // Attach visualizer
     if(!prefix.empty() || !extension.empty()){
         visualizer.emplace(prefix, extension);
+    }
+    if(cnnPath.empty()){
+        gamma = 0;
+    }else{
+        trainer.emplace(cnnPath);
+        gamma = 1;
     }
 }
 
@@ -56,7 +60,11 @@ std::vector<MoveDirection> Solver::solve(){
         // Check fresh state
         if(curState->childs.empty()){
             // Get suggestion
-            std::vector<Decimal> suggestions = trainer.suggest(map);
+            std::vector<Decimal> suggestions;
+            if(trainer.has_value()){
+                suggestions = trainer->suggest(map);
+            }
+            
             // Make actions
             for(MoveDirection dir: {
                 MoveDirection::Up,
@@ -74,7 +82,9 @@ std::vector<MoveDirection> Solver::solve(){
                     }
                     // Other state
                     State *nextState = states[key];
-                    nextState->suggestion = suggestions[dir];
+                    if(trainer.has_value()){
+                        nextState->suggestion = suggestions[dir];
+                    }
                     if(nextState->parent != nullptr){
                         nextState->distance = nextState->parent->distance + 1;
                     }
@@ -95,7 +105,9 @@ std::vector<MoveDirection> Solver::solve(){
                 else{
                     // Create new state and put into states
                     State* nextState = new State(curState->distance + 1, newMap, curState, dir);
-                    nextState->suggestion = suggestions[dir];
+                    if(trainer.has_value()){
+                        nextState->suggestion = suggestions[dir];
+                    }
                     curState->childs[dir] = nextState;
                     states[nextState->key] = nextState;
                     // Check if win or not
@@ -124,8 +136,10 @@ std::vector<MoveDirection> Solver::solve(){
                         // Unsolved
                         return {};
                     }else{
-                        sugSum += curState->suggestion;
-                        count += 1;
+                        if(trainer.has_value()){
+                            sugSum += curState->suggestion;
+                            count += 1;
+                        }
                         State* parent = curState->parent;
                         parent->childs.erase(curState->direction);
                         states.erase(curState->key);
@@ -137,7 +151,9 @@ std::vector<MoveDirection> Solver::solve(){
                 visualize(iteration, curState, map);
                 curState = restart(map, iteration, curState);
                 // Update gamma
-                gamma = 1.0 - (sugSum / (Decimal)count);
+                if(trainer.has_value()){
+                    gamma = 1.0 - (sugSum / (Decimal)count);
+                }
                 continue;
             }
         }
@@ -233,13 +249,18 @@ MoveDirection Solver::decide(const State* const state, const Map map){
         std::pair<Decimal, MoveDirection> &pair = possibilities.emplace_back(confidence(child), direction);
         sum += pair.first;
         expert_sum += child->suggestion;
-        suggestions[direction] = child->suggestion;
+        if(trainer.has_value()){
+            suggestions[direction] = child->suggestion;
+        }
     }
     // Generate random float number between 0 to 1
     Decimal choice = std::generate_canonical<Decimal, sizeof(Decimal) * 8>(random_generator);
     // Make decision 
     for(auto [conf, dir]: possibilities){
-        choice -= ((1-gamma)*(conf / sum) + gamma*(suggestions[dir] / expert_sum));
+        choice -= (1 - gamma) * (conf / sum);
+        if(trainer.has_value()){
+            choice -= gamma * (suggestions[dir] / expert_sum);
+        }
         if(choice <= 0){
             return dir;
         }

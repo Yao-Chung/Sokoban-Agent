@@ -14,7 +14,7 @@
 
 class Solver{
 public:
-    Solver(const Map level, std::string cnnPath, std::string prefix = "", std::string extension = "");
+    Solver(const Map level, std::string cnnPath = "", std::string prefix = "", std::string extension = "");
     std::vector<MoveDirection> solve();
     ~Solver();
 
@@ -30,7 +30,7 @@ private:
     std::mt19937 random_generator;
     std::unordered_map<std::string, State*> states;
     std::optional<Visualizer> visualizer;
-    Trainer trainer;
+    std::optional<Trainer> trainer;
 
     bool isWin(const Map& map);
     Decimal confidence(const State* const state);
