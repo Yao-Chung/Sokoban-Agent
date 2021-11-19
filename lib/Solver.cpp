@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <State.hpp>
 
-#define deltaIter 1
+#define visualizer_advance 0
 
 Solver::Solver(const Map level, std::string cnnPath, std::string prefix, std::string extension):
     alpha(1),
@@ -74,6 +74,7 @@ std::vector<MoveDirection> Solver::solve(){
                     }
                     // Other state
                     State *nextState = states[key];
+                    nextState->suggestion = suggestions[dir];
                     if(nextState->parent != nullptr){
                         nextState->distance = nextState->parent->distance + 1;
                     }
@@ -94,6 +95,7 @@ std::vector<MoveDirection> Solver::solve(){
                 else{
                     // Create new state and put into states
                     State* nextState = new State(curState->distance + 1, newMap, curState, dir);
+                    nextState->suggestion = suggestions[dir];
                     curState->childs[dir] = nextState;
                     states[nextState->key] = nextState;
                     // Check if win or not
@@ -111,8 +113,6 @@ std::vector<MoveDirection> Solver::solve(){
                         return policy;
                     }
                 }
-                // Assign suggestion value
-                curState->childs[dir]->suggestion = suggestions[dir];
             }
             // Check if curState is dead node
             if(curState->childs.empty()){
@@ -134,6 +134,7 @@ std::vector<MoveDirection> Solver::solve(){
                     }
                 }
                 // Restart
+                visualize(iteration, curState, map);
                 curState = restart(map, iteration, curState);
                 // Update gamma
                 gamma = 1.0 - (sugSum / (Decimal)count);
@@ -163,10 +164,11 @@ std::vector<MoveDirection> Solver::solve(){
             // Update alpha, beta, maxIter
             alpha = (Decimal)std::sqrt(restartCount + 1);
             beta = ((curState->finishTargets == 0) ? 1 : ((Decimal)maxIter / (Decimal)curState->finishTargets)) + (Decimal)boxMoveCount / (Decimal)maxIter;
-            maxIter += deltaIter;
+            maxIter += 1;
             std::cerr << "MaxIter: " << maxIter << " Restart: " << restartCount
                 << " a: " << alpha
                 << " b: " << beta 
+                << " r: " << gamma 
                 << " R: " << curState->restartCost
                 << " a/R: " << ((curState->restartCost > 0) ? (alpha / (Decimal)curState->restartCost) : 1)
                 << " b*T: " << beta * (Decimal)curState->finishTargets
@@ -254,7 +256,7 @@ void Solver::visualize(const unsigned int iteration, const State* const curState
         }
 
         // Prologue
-        visualizer->next(1);
+        visualizer->next(visualizer_advance);
         visualizer->out << std::string("digraph{") << std::endl;
         // Print states by BFS
         std::queue<State*> stateQueue;
@@ -306,6 +308,7 @@ void Solver::visualize(const unsigned int iteration, const State* const curState
         visualizer->out << "\n\tadditional[label=\""
             << "alpha =" << alpha << "\\n"
             << "beta =" << beta << "\\n"
+            << "gamma =" << gamma << "\\n"
             << "BoxMoveC=" << boxMoveCount << "\\n"
             << "RestartC=" << restartCount << "\\n"
             << "Mi=" << maxIter << "\\n"

@@ -14,13 +14,15 @@ static void printMap(const Map& map){
 int main(int argc, char* const argv[])
 {
     std::string prefix, extension, netPath, solutionPath;
-    if(argc < 3){
-        std::cerr << "Usage: " << argv[0] << " <net_file> <solution_file>" << std::endl;
+    size_t mapId = 0;
+    if(argc < 4){
+        std::cerr << "Usage: " << argv[0] << " <net_file> <solution_file> <mapId>" << std::endl;
     }else{
         netPath = argv[1];
         solutionPath = argv[2];
-        if(argc > 3){
-            prefix = argv[3];
+        mapId = std::atoi(argv[3]);
+        if(argc > 4){
+            prefix = argv[4];
             extension = ".dot";
         }
     }
@@ -146,7 +148,7 @@ int main(int argc, char* const argv[])
             "##########",
         }
     };
-    std::vector<std::string> &level = levels[0];
+    std::vector<std::string> &level = levels[mapId];
 
     // Create solver
     Solver solver(level, netPath, prefix, extension);
