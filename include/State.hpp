@@ -16,6 +16,7 @@ struct State{
     Position manPosition;
     std::vector<Position> boxPosition;
     std::string key;
+    Decimal suggestion;
 
     State() = default;
     State(unsigned int distance, Map map, State* parent, MoveDirection direction);

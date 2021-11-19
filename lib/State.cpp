@@ -5,7 +5,8 @@ State::State(unsigned int distance, Map map, State* parent, MoveDirection direct
     direction(direction),
     distance(distance),
     restartCost(distance),
-    finishTargets(0)
+    finishTargets(0),
+    suggestion(0)
 {
     std::pair< Position, std::vector<Position> > positions(getPositions(map));
     manPosition = positions.first;
