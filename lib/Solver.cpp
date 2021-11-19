@@ -55,6 +55,8 @@ std::vector<MoveDirection> Solver::solve(){
     for(unsigned int iteration=1; ; ++iteration){
         // Check fresh state
         if(curState->childs.empty()){
+            // Get suggestion
+            std::vector<Decimal> suggestions = trainer.suggest(map);
             // Make actions
             for(MoveDirection dir: {
                 MoveDirection::Up,
@@ -109,15 +111,21 @@ std::vector<MoveDirection> Solver::solve(){
                         return policy;
                     }
                 }
+                // Assign suggestion value
+                curState->childs[dir]->suggestion = suggestions[dir];
             }
             // Check if curState is dead node
             if(curState->childs.empty()){
+                Decimal sugSum = 0;
+                size_t count = 0;
                 // Clean dead nodes
                 while (curState->childs.empty()){
                     if(curState->parent == nullptr){
                         // Unsolved
                         return {};
                     }else{
+                        sugSum += curState->suggestion;
+                        count += 1;
                         State* parent = curState->parent;
                         parent->childs.erase(curState->direction);
                         states.erase(curState->key);
@@ -127,6 +135,8 @@ std::vector<MoveDirection> Solver::solve(){
                 }
                 // Restart
                 curState = restart(map, iteration, curState);
+                // Update gamma
+                gamma = 1.0 - (sugSum / (Decimal)count);
                 continue;
             }
         }

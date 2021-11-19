@@ -13,11 +13,18 @@ static void printMap(const Map& map){
 
 int main(int argc, char* const argv[])
 {
-    std::string prefix, extension;
-    if(argc > 1){
-        prefix = argv[1];
-        extension = ".dot";
+    std::string prefix, extension, netPath, solutionPath;
+    if(argc < 3){
+        std::cerr << "Usage: " << argv[0] << " <net_file> <solution_file>" << std::endl;
+    }else{
+        netPath = argv[1];
+        solutionPath = argv[2];
+        if(argc > 3){
+            prefix = argv[3];
+            extension = ".dot";
+        }
     }
+    
 
     // Get map from server
     // HttpClient client("sokoban.luishsu.me", "80");
@@ -142,13 +149,13 @@ int main(int argc, char* const argv[])
     std::vector<std::string> &level = levels[0];
 
     // Create solver
-    Solver solver(level, prefix, extension);
+    Solver solver(level, netPath, prefix, extension);
     // Solve
     std::vector<MoveDirection> policy = solver.solve();
     std:: cout << "=== Finished ===" << std::endl;
     std:: cout << "policy size = " << policy.size() << std::endl;
     // Write solution to file
-    write_solution("solution1.txt", level, policy);
+    write_solution(solutionPath, level, policy);
     
     // Replay policy
     std::cout << "== Replay ==" << std::endl;
