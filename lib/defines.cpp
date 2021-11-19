@@ -156,3 +156,16 @@ void write_solution(const std::string filename, const Map& map, const std::vecto
     fwrite(policy.data(), sizeof(MoveDirection), policy.size(), fp);
     fclose(fp);
 }
+
+Map readMap(std::string filename){
+    std::ifstream fin(filename, std::ios::binary);
+    int32_t size[2];
+    fin.read((char*)size, sizeof(int32_t) * 2);
+    Map map(size[0]);
+    for(std::string &row: map){
+        row.resize(size[1]);
+        fin.read(row.data(), size[1]);
+    }
+    fin.close();
+    return map;
+}

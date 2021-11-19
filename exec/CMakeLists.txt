@@ -1,7 +1,15 @@
-add_executable(agent1
-    agent1.cpp
+add_executable(solver
+    solver.cpp
 )
-target_link_libraries(agent1
+target_link_libraries(solver
+    sokoban-agent
+    ${TORCH_LIBRARIES}
+)
+
+add_executable(agent
+    agent.cpp
+)
+target_link_libraries(agent
     sokoban-agent
     ${TORCH_LIBRARIES}
 )
