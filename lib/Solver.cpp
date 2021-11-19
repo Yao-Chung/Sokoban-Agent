@@ -5,20 +5,21 @@
 #include <vector>
 #include <iostream>
 #include <unordered_set>
-
 #include <State.hpp>
 
 #define deltaIter 1
 
-Solver::Solver(const Map level, std::string prefix, std::string extension):
+Solver::Solver(const Map level, std::string cnnPath, std::string prefix, std::string extension):
     alpha(1),
     beta(1),
+    gamma(1),
     maxIter(1),
     boxMoveCount(0),
     restartCount(0),
     root(nullptr),
     level(level),
-    random_generator(std::random_device()())
+    random_generator(std::random_device()()),
+    trainer(cnnPath)
 {
     // Attach visualizer
     if(!prefix.empty() || !extension.empty()){
@@ -130,7 +131,7 @@ std::vector<MoveDirection> Solver::solve(){
             }
         }
         // Decide which direction to go
-        MoveDirection nextDir = decide(curState);
+        MoveDirection nextDir = decide(curState, map);
         State* nextState = curState->childs[nextDir];
         // Update boxMoveCount
         if(getBoxKey(curState->key) != getBoxKey(nextState->key)){
@@ -209,7 +210,7 @@ State* Solver::restart(Map &map, unsigned int &iteration, State* curState){
     return root;
 }
 
-MoveDirection Solver::decide(const State* const state){
+MoveDirection Solver::decide(const State* const state, const Map map){
     // Calculate confidences and sum
     std::vector<std::pair<Decimal, MoveDirection>> possibilities;
     Decimal sum = 0;

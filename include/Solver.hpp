@@ -10,16 +10,18 @@
 #include <defines.hpp>
 #include <Visualizer.hpp>
 #include <State.hpp>
+#include <Trainer.hpp>
 
 class Solver{
 public:
-    Solver(const Map level, std::string prefix = "", std::string extension = "");
+    Solver(const Map level, std::string cnnPath, std::string prefix = "", std::string extension = "");
     std::vector<MoveDirection> solve();
     ~Solver();
 
 private:
     Decimal alpha;
     Decimal beta;
+    Decimal gamma;
     unsigned int maxIter;
     unsigned int boxMoveCount;
     unsigned int restartCount;
@@ -28,10 +30,11 @@ private:
     std::mt19937 random_generator;
     std::unordered_map<std::string, State*> states;
     std::optional<Visualizer> visualizer;
+    Trainer trainer;
 
     bool isWin(const Map& map);
     Decimal confidence(const State* const state);
-    MoveDirection decide(const State* const state);
+    MoveDirection decide(const State* const state, const Map map);
     void visualize(const unsigned int iteration, const State* const curState, const Map& map);
     void clean();
     State* restart(Map &map, unsigned int &iteration, State* curState);
