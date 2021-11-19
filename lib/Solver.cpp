@@ -267,6 +267,7 @@ void Solver::visualize(const unsigned int iteration, const State* const curState
                 << "D=" << state->distance << "\\n"
                 << "T=" << state->finishTargets << "\\n"
                 << "R=" << state->restartCost << "\\n"
+                << "S=" << state->suggestion << "\\n"
                 << "Pos=(" << state->manPosition.first << ", " << state->manPosition.second << ")\\n"
             << "\"";
             if(state == curState){
