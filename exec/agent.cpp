@@ -36,32 +36,34 @@ int main(int argc, char* const argv[])
     // Solve
     std::vector<MoveDirection> policy = solver.solve();
     std:: cout << "=== Finished ===" << std::endl;
-    std:: cout << "policy size = " << policy.size() << std::endl;
+    std:: cout << "total steps = " << policy.size() << std::endl;
     // Write solution to file
     write_solution(solutionPath, level, policy);
     
     // Replay policy
-    std::cout << "== Replay ==" << std::endl;
+    std::cout << "== Solution ==" << std::endl;
     std::vector<std::string> map(level);
     for(MoveDirection direction: policy){
         map = move(map, direction, level);
         switch(direction){
             case MoveDirection::Up:
-                std::cout << "Up" << std::endl;
+                std::cout << "Up, ";
             break;
             case MoveDirection::Down:
-                std::cout << "Down" << std::endl;
+                std::cout << "Down, ";
             break;
             case MoveDirection::Left:
-                std::cout << "Left" << std::endl;
+                std::cout << "Left, ";
             break;
             case MoveDirection::Right:
-                std::cout << "Right" << std::endl;
+                std::cout << "Right, ";
             break;
             default:
             break;
         }
-        printMap(map);
     }
+    std::cout << std::endl;
+    std::cout << "== Final state ==" << std::endl;
+    printMap(map);
     return 0;
 }

@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <State.hpp>
 
-#define visualizer_advance 0
+#define visualizer_advance 1
 
 Solver::Solver(const Map level, std::string cnnPath, std::string prefix, std::string extension):
     alpha(1),
@@ -148,7 +148,6 @@ std::vector<MoveDirection> Solver::solve(){
                     }
                 }
                 // Restart
-                visualize(iteration, curState, map);
                 curState = restart(map, iteration, curState);
                 // Update gamma
                 if(trainer.has_value()){
