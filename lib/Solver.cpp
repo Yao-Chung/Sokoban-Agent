@@ -112,10 +112,10 @@ std::vector<MoveDirection> Solver::solve(){
                     states[nextState->key] = nextState;
                     // Check if win or not
                     if(isWin(newMap)){
+                        curState = nextState;
                         // Visualize
                         visualize(iteration, curState, newMap);
                         // Calculate the winning path from curState
-                        curState = nextState;
                         std::vector<MoveDirection> policy;
                         while(curState != root){
                             policy.emplace_back(curState->direction);

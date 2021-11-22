@@ -30,5 +30,7 @@ int main(int argc, char* const argv[]){
             map.clear();
         }
     }
+    fclose(fp);
+    inputFile.close();
     return 0;
 }

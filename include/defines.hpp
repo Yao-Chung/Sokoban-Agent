@@ -23,5 +23,5 @@ Map move(const Map& map, const MoveDirection direction, const Map& level);
 void write_solution(const std::string filename, const Map& map, const std::vector<MoveDirection>& policy);
 std::vector< std::pair<Map, std::vector<MoveDirection>> > read_solutions(std::string filename);
 Map readMap(std::string filename);
-
+std::vector< std::pair<Map, std::vector<MoveDirection>> > clean_solutions(std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions);
 #endif

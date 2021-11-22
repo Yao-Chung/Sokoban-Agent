@@ -23,3 +23,10 @@ target_link_libraries(trainer1
     sokoban-agent
     ${TORCH_LIBRARIES}
 )
+
+add_executable(collector
+    collector.cpp
+)
+target_link_libraries(trainer1
+    sokoban-agent
+)

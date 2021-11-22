@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <sstream>
 #include <fstream>
+#include <unordered_map>
+#include <unordered_set>
 
 std::string getKey(const Map map){
     std::pair< Position, std::vector<Position> > positions = getPositions(map);
@@ -168,4 +170,31 @@ Map readMap(std::string filename){
     }
     fin.close();
     return map;
+}
+
+std::vector< std::pair<Map, std::vector<MoveDirection>> > clean_solutions(std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions){
+    // Create a unordered_map for unique solutions
+    std::unordered_map< std::string, std::pair<Map, std::unordered_set<std::string> > > map_to_solutions;
+    for(auto solution: solutions){
+        // transform vector<MoveDirection> to string
+        std::string steps("");
+        for(MoveDirection dir: solution.second){
+            steps += (dir+'0');
+        }
+        // Put steps into map_to_solutions
+        map_to_solutions[getKey(solution.first)].first = solution.first;
+        map_to_solutions[getKey(solution.first)].second.insert(steps);
+    }
+    std::vector< std::pair<Map, std::vector<MoveDirection>> > unique_solutions;
+    for(auto [key, p]: map_to_solutions){
+        for(std::string steps: p.second){
+            // transform string to vector<MoveDirection>
+            std::vector<MoveDirection> solution;
+            for(auto c: steps){
+                solution.emplace_back(c-'0');
+            }
+            unique_solutions.push_back({p.first, solution});
+        }
+    }
+    return unique_solutions;
 }
