@@ -114,16 +114,8 @@ std::vector< std::pair<Map, std::vector<MoveDirection>> > read_solutions(std::st
     // Read solutions
     std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions;
     while(!fin.eof()){
-        int32_t rows, cols;
-        // Read row & column
-        fin.read((char*)&rows, sizeof(int32_t));
-        fin.read((char*)&cols, sizeof(int32_t));
         // Read map
-        Map map(rows);
-        for(int32_t i = 0; i < rows; ++i){
-            map[i].resize(cols);
-            fin.read(map[i].data(), cols);
-        }
+        Map map = readMap(fin);
         // Read policy size
         int32_t pSize;
         fin.read((char*)&pSize, sizeof(int32_t));
@@ -159,16 +151,14 @@ void write_solution(const std::string filename, const Map& map, const std::vecto
     fclose(fp);
 }
 
-Map readMap(std::string filename){
-    std::ifstream fin(filename, std::ios::binary);
+Map readMap(std::ifstream &stream){
     int32_t size[2];
-    fin.read((char*)size, sizeof(int32_t) * 2);
+    stream.read((char*)size, sizeof(int32_t) * 2);
     Map map(size[0]);
     for(std::string &row: map){
         row.resize(size[1]);
-        fin.read(row.data(), size[1]);
+        stream.read(row.data(), size[1]);
     }
-    fin.close();
     return map;
 }
 
