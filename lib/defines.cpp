@@ -169,7 +169,7 @@ std::vector< std::pair<Map, std::vector<MoveDirection>> > clean_solutions(std::v
         // transform vector<MoveDirection> to string
         std::string steps("");
         for(MoveDirection dir: solution.second){
-            steps += (dir+'0');
+            steps += (dir + '0');
         }
         // Put steps into map_to_solutions
         map_to_solutions[getKey(solution.first)].first = solution.first;
@@ -181,7 +181,7 @@ std::vector< std::pair<Map, std::vector<MoveDirection>> > clean_solutions(std::v
             // transform string to vector<MoveDirection>
             std::vector<MoveDirection> solution;
             for(auto c: steps){
-                solution.emplace_back(c-'0');
+                solution.emplace_back((MoveDirection)(c -'0'));
             }
             unique_solutions.push_back({p.first, solution});
         }
