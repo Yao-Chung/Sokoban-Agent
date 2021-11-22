@@ -30,7 +30,9 @@ int main(int argc, char* const argv[])
         }
     }
     
-    Map level = readMap(mapPath);
+    std::ifstream fin(mapPath, std::ios::binary);
+    Map level = readMap(fin);
+    fin.close();
 
     // Create solver
     Solver solver(level, netPath, prefix, extension);

@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 #include <defines.hpp>
 #include <Solver.hpp>
@@ -28,8 +29,9 @@ int main(int argc, char* const argv[])
             extension = ".dot";
         }
     }
-    
-    Map level = readMap(mapPath);
+    std::ifstream fin(mapPath, std::ios::binary);
+    Map level = readMap(fin);
+    fin.close();
 
     // Create solver
     Solver solver(level, netPath, prefix, extension);
