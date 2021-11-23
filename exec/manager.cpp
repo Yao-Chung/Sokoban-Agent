@@ -7,14 +7,18 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <cstring>
+#include <unordered_map>
 
-#define SOLVER_NUM 1
+std::unordered_map<pid_t, char**> solver_parameter;
+std::ifstream fp;
+std::vector<int> startPos;
 
 // Return {rows, cols} and set file pointer to ready position
-std::string random_map(std::ifstream &fp, std::vector<int> &startPos){
+std::string random_map(){
     // Get the random index of map
     int total = startPos.size();
     int index = rand() % total;
+    std::cout << "Map index: " << index << std::endl;
     // Point the file pointer to target map
     fp.seekg(startPos[index], std::ios_base::beg);
     int32_t rows, cols;
@@ -25,8 +29,7 @@ std::string random_map(std::ifstream &fp, std::vector<int> &startPos){
     fp.read((char*)returnMap.data(), rows*cols+8);
     return returnMap;
 }
-std::vector<int> get_start_pos(std::ifstream &fp){
-    std::vector<int> startPos;
+void get_start_pos(){
     while(!fp.eof()){
         startPos.push_back((int)fp.tellg());
         int32_t rows, cols;
@@ -35,61 +38,73 @@ std::vector<int> get_start_pos(std::ifstream &fp){
         fp.seekg(rows*cols, std::ios_base::cur);
         fp.peek();
     }
-    return startPos;
 }
-void handle_child(int nsig){
-    // Wait for child
-    pid_t child_pid = waitpid(0, NULL, 0);
-    std::cerr << "A child with pid: " << child_pid << " is dead." << std::endl;
-    //TODO:
-
-}
-int run_solver(char *solver_path, char **argv, std::ifstream &fp, std::vector<int> &startPos){
+void run_solver(char **argv){
     // Get the random map for solver
-    std::string returnMap = random_map(fp, startPos);
+    std::string returnMap = random_map();
     // Create pipe
     int fd[2];
-    int fd2[2];
     if(pipe(fd) == -1){
         perror("pipe failed");
-        return -1;
-    }
-    if(pipe(fd2) == -1){
-        perror("pipe2 failed");
-        return -1;
+        return;
     }
     pid_t child_pid = fork();
     if(child_pid == -1){
         perror("fork");
-        return -1;
+        return;
     }
     else if(child_pid > 0){     // This is parent process
         // Write the map into pipe
-        write(fd[1], returnMap.data(), sizeof(returnMap));
+        solver_parameter[child_pid] = argv;
+        close(fd[0]);
+        write(fd[1], returnMap.data(), returnMap.size());
         close(fd[1]);
     }else{      // This is child process
+        close(fd[1]);
         dup2(fd[0], 0);
-        dup2(fd2[1], 1);
-        execve(solver_path, argv, nullptr);
+        execve(argv[0], argv, nullptr);
         exit(0);
     }
-    return fd2[0];
+}
+void handle_child(int nsig){
+    // Wait for child
+    int status = 0;
+    pid_t child_pid = waitpid(0, &status, 0);
+    if(child_pid == -1){
+        perror("waitpid error");
+        return;
+    }
+    std::cerr << "A child with pid: " << child_pid << " is dead." << std::endl;
+    if(WIFSIGNALED(status)){
+        std::cout << "child was killed by a signal." << std::endl;
+        return;
+    }
+    char **argv = solver_parameter[child_pid];
+    run_solver(argv);
 }
 int main(int argc, char *argv[]){
-    if(argc < 3){
-        std::cerr << "Usage: " << argv[0] << "<map_file> <solver_file> [solution_file] [net_file]" << std::endl;
+    if(argc < 5){
+        std::cerr << "Usage: " << argv[0] << "<map_file> <solver_file> <child_num> [solution_file]+ [net_file]" << std::endl;
         return -1;
     }
     srand (time(NULL));
     std::string mapPath(argv[1]);
     std::string solverPath(argv[2]);
-    std::string solutionFile(argv[3]);
-    std::string netFile("");
-    if(argc > 4){
-        netFile = argv[4];
+    std::string child_num(argv[3]);
+    int child_number = std::stoi(child_num);
+    std::vector<std::string> solutionFiles;
+    // Get all solution files from argv
+    for(int i=0; i<child_number; ++i){
+        solutionFiles.push_back(argv[4+i]);
     }
-    std::ifstream fp(mapPath, std::ios::binary);
-    std::vector<int> startPos = get_start_pos(fp);
+    std::string netFile("");
+    if(argc > 4+child_number){
+        netFile = argv[3+child_number];
+    }
+    // Initialize fp and startPos
+    fp = std::ifstream(mapPath, std::ios::binary);
+    startPos.resize(0);
+    get_start_pos();
     // Install signal to sigaction
     struct sigaction act, oldact;
     memset(&act, 0, sizeof(act));
@@ -97,6 +112,7 @@ int main(int argc, char *argv[]){
     sigaddset(&act.sa_mask, SIGQUIT);
     sigaddset(&act.sa_mask, SIGINT);
     act.sa_flags = SA_NODEFER;
+    // Error check
     if(sigaction(SIGCHLD, &act, &oldact) != 0){
         perror("sigaction() failed installing SIGINT handler.");
         return -1;
@@ -104,20 +120,31 @@ int main(int argc, char *argv[]){
     // Run solver
     std::vector<char*> solver_args;
     solver_args.emplace_back(solverPath.data());
-    solver_args.emplace_back(solutionFile.data());
+    solver_args.emplace_back(std::string("").data());
     if(netFile != ""){
         solver_args.emplace_back(netFile.data());
     }
     solver_args.emplace_back(nullptr);
-    int fd = run_solver(solverPath.data(), solver_args.data(), fp, startPos);
-    while(fd != -1){
-        char buf[1024];
-        int num = read(fd, buf, 1024);
-        if(num > 0){
-            std::string msg(buf, num);
-            std::cout << msg << std::flush;
+    
+    for(int i=0; i<child_number; ++i){
+        solver_args[1] = solutionFiles[i].data();
+        run_solver(solver_args.data());
+    }
+    while(true){
+        std::cout << "Type quit to exit the parent process" << std::endl;
+        std::string order;
+        std::cin >> order;
+        // Quit from parent process
+        if(order == "quit"){
+            // Clean child
+            while(solver_parameter.size() > 0){
+                auto p = *solver_parameter.begin();
+                kill(p.first, SIGKILL);
+                solver_parameter.erase(p.first);
+            }
+            std::cout << solver_parameter.size() << std::endl;
+            return 0;
         }
-            
     }
     return 0;
 }
