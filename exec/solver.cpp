@@ -16,7 +16,7 @@ int main(int argc, char* const argv[])
 {
     std::string prefix, extension, mapPath, netPath, solutionPath;
     if(argc < 3){
-        std::cerr << "Usage: " << argv[0] << " <map_file> <solution_file> [net_file] [dot_file_prefix]" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <solution_file> [net_file] [dot_file_prefix]" << std::endl;
         return -1;
     }else{
         mapPath = argv[1];
