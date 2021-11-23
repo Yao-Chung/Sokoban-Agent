@@ -1,10 +1,12 @@
 #include <iostream>
 #include <vector>
 #include <filesystem>
+#include <unordered_set>
 #include <unordered_map>
 #include <string>
 #include <utility>
 #include <cstdio>
+#include <fstream>
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -40,7 +42,7 @@ static void stdin_handler(int epollFd, std::unordered_map<int, std::pair<std::st
     }
 }
 
-static bool fifo_handler(int fifoFd, std::string &buffer){
+static bool fifo_handler(int fifoFd, std::string &buffer, std::filesystem::path directory, std::string filename){
     // Read data & put into buffer
     char buf[256];
     ssize_t size = 0;
@@ -53,7 +55,7 @@ static bool fifo_handler(int fifoFd, std::string &buffer){
         return false;
     }
     // Extract data from buffer
-    std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions;
+    std::vector< std::pair<std::string, std::string> > datas;
     while(buffer.size() > 8){
         int32_t *mapSize = (int32_t*)buffer.data();
         size_t mapBytes = mapSize[0] * mapSize[1];
@@ -61,17 +63,44 @@ static bool fifo_handler(int fifoFd, std::string &buffer){
             int32_t policySize = *(int32_t*)(buffer.data() + (mapBytes + 8));
             size_t solutionSize = mapBytes + policySize * sizeof(MoveDirection) + 12;
             if(buffer.size() >= solutionSize){
-                std::stringstream stream(buffer);
-                // Read map
-                Map map = readMap(stream);
-                // Read policy
-                stream.read((char*)&policySize, sizeof(int32_t));
-                std::vector<MoveDirection> policy(policySize);
-                stream.read((char*)policy.data(), sizeof(MoveDirection) * policySize);
+                std::stringstream data(buffer);
+                std::stringstream key;
+                key << std::hex << std::hash<std::string>{}(getKey(readMap(data)));
                 // Push solutions
-                solutions.emplace_back(map, policy);
+                datas.emplace_back(key.str(), buffer.substr(0, solutionSize));
                 buffer = buffer.substr(solutionSize);
             }
+        }
+    }
+    if(datas.size() > 0){
+        // Write to map file
+        std::unordered_set<std::string> mapKeys;
+        for(auto [key, data]: datas){
+            mapKeys.insert(key);
+            std::ofstream dirOut(std::filesystem::path(directory).append(key).string(), std::ios::app);
+            std::ofstream fileOut(filename, std::ios::app);
+            dirOut.write(data.data(), data.size());
+            fileOut.write(data.data(), data.size());
+            dirOut.close();
+            fileOut.close();
+        }
+        // Clean directory files
+        for(std::string key: mapKeys){
+            std::filesystem::path filepath(directory);
+            filepath /= key;
+            std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions = clean_solutions(read_solutions(filepath.string()));
+            std::ofstream cleanOut(filepath, std::ios::trunc);
+            cleanOut.close();
+            for(auto [map, policy]: solutions){
+                write_solution(filepath.string(), map, policy);
+            }
+        }
+        // Clean map file
+        std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions = clean_solutions(read_solutions(filename));
+        std::ofstream cleanOut(filename, std::ios::trunc);
+        cleanOut.close();
+        for(auto [map, policy]: solutions){
+            write_solution(filename, map, policy);
         }
     }
     return true;
@@ -80,7 +109,7 @@ static bool fifo_handler(int fifoFd, std::string &buffer){
 int main(int argc, char *argv[]){
     // Print usage
     if(argc < 4){
-        std::cerr << "Usage: " << argv[0] << " <solutions_dir> [input_files]+" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <solutions_dir> <solution_file> [input_files]+" << std::endl;
         return -1;
     }
     // Ensure folder exists
@@ -102,7 +131,7 @@ int main(int argc, char *argv[]){
     std::vector<epoll_event> events;
     // Create FIFOs
     std::unordered_map<int, std::pair<std::string, std::string> > fifos;
-    for(int i = 2; i < argc; ++i){
+    for(int i = 3; i < argc; ++i){
         // Make
         if(mkfifo(argv[i], 0666)){
             perror("mkfifo");
@@ -145,7 +174,9 @@ int main(int argc, char *argv[]){
             }else{
                 // fifo
                 if(event.events & EPOLLIN){
-                    if(!fifo_handler(event.data.fd, fifos[event.data.fd].second)){
+                    std::cout << "Receive solutions from " << fifos[event.data.fd].first << std::endl;
+                    std::cout << "> " << std::flush;
+                    if(!fifo_handler(event.data.fd, fifos[event.data.fd].second, directory, argv[2])){
                         clean(epollFd, fifos);
                         return -1;
                     }
