@@ -36,3 +36,6 @@ target_link_libraries(manager
     sokoban-agent
     ${TORCH_LIBRARIES}
 )
+add_executable(forktest
+    forktest.cpp
+)
