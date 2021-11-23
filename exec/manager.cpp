@@ -111,8 +111,8 @@ int main(int argc, char *argv[]){
         solutionFiles.push_back(argv[4+i]);
     }
     std::string netFile("");
-    if(argc > 4+child_number){
-        netFile = argv[3+child_number];
+    if(argc > (4 + child_number)){
+        netFile = argv[4 + child_number];
     }
     // Initialize fp and startPos
     fp = std::ifstream(mapPath, std::ios::binary);
