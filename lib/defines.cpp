@@ -151,7 +151,7 @@ void write_solution(const std::string filename, const Map& map, const std::vecto
     fclose(fp);
 }
 
-Map readMap(std::ifstream &stream){
+Map readMap(std::istream &stream){
     int32_t size[2];
     stream.read((char*)size, sizeof(int32_t) * 2);
     Map map(size[0]);
