@@ -6,9 +6,8 @@
 #include <defines.hpp>
 #include <torch/torch.h>
 
-#define epoch 10
-#define batch 50
-#define threshold 0.000001
+#define epoch 50
+#define threshold 0.001
 
 struct Net: torch::nn::Module{
     Net();

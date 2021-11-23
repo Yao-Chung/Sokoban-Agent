@@ -46,11 +46,11 @@ void Trainer::train(Map level, std::vector<MoveDirection> policy){
     // Add optimizer
     torch::optim::Adam optimizer = torch::optim::Adam(net.parameters(), torch::optim::AdamOptions(1e-3));
     // Training
-    Decimal lastAvgLoss = 0.0;
-    for(size_t epo = 0; epo < epoch; ++epo){
-        Decimal avgLoss = 0.0;
-        for(size_t bat = 0; bat < batch; ++bat){
-            // Save the original map
+    Decimal lastAccuracy = 0.0;
+    for(size_t iter = 0; ; ++iter){
+        int hitCount = 0;
+        for(size_t epo = 0; epo < epoch; ++epo){
+            // Epoch
             Map map = level;
             for(MoveDirection dir: policy){
                 std::vector<Decimal> answerVec(4);
@@ -59,7 +59,6 @@ void Trainer::train(Map level, std::vector<MoveDirection> policy){
                 torch::Tensor predict = net.forward(extract(map)).reshape({1, 4});
                 // Calculate loss
                 torch::Tensor loss = torch::nn::functional::cross_entropy(answer, predict);
-                avgLoss += *loss.data_ptr<Decimal>();
                 // update parameters
                 loss.backward();
                 optimizer.step();
@@ -67,13 +66,24 @@ void Trainer::train(Map level, std::vector<MoveDirection> policy){
                 // Move to another state
                 map = move(map, dir, level);
             }
+            // Validate
+            map = level;
+            for(MoveDirection dir: policy){
+                torch::Tensor maxTensor = torch::argmax(net.forward(extract(map)));
+                int maxIndex = *maxTensor.data_ptr<long>();
+                if(maxIndex == dir){
+                    hitCount += 1;
+                }
+                map = move(map, dir, level);
+            }
         }
-        avgLoss /= (Decimal) (batch * policy.size());
-        std::cout << "[" << epo << "] Avg loss: " << avgLoss << " abs: " << std::abs(avgLoss - lastAvgLoss) << std::endl;
-        if(std::abs(avgLoss - lastAvgLoss) < threshold){
+        Decimal accuracy = (Decimal) hitCount / (Decimal) (epoch * policy.size());
+        std::cout << "[" << iter << "] Accuracy: " << accuracy << std::endl;
+        if(std::abs(lastAccuracy - accuracy) <= threshold){
             break;
+        }else{
+            lastAccuracy = accuracy;
         }
-        lastAvgLoss = avgLoss;
     }
 }
 
