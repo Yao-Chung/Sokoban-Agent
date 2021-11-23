@@ -5,6 +5,9 @@
 #include <string>
 #include <fstream>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/epoll.h>
 #include <sys/wait.h>
 #include <cstring>
 #include <unordered_map>
@@ -117,6 +120,18 @@ int main(int argc, char *argv[]){
         perror("sigaction() failed installing SIGINT handler.");
         return -1;
     }
+    // Create epoll queue
+    int epollFd = epoll_create1(EPOLL_CLOEXEC);
+    if(epollFd < 0){
+        perror("epoll_create");
+        return -1;
+    }
+    epoll_event event {.events=EPOLLIN, .data = {.fd = STDIN_FILENO}};
+    // Add stdin to epoll
+    if(epoll_ctl(epollFd, EPOLL_CTL_ADD, STDIN_FILENO, &event)){
+        perror("epoll_ctl[stdin]");
+        return -1;
+    }
     // Run solver
     std::vector<char*> solver_args;
     solver_args.emplace_back(solverPath.data());
@@ -130,20 +145,25 @@ int main(int argc, char *argv[]){
         solver_args[1] = solutionFiles[i].data();
         run_solver(solver_args.data());
     }
-    while(true){
-        std::cout << "Type quit to exit the parent process" << std::endl;
-        std::string order;
-        std::cin >> order;
-        // Quit from parent process
-        if(order == "quit"){
-            // Clean child
-            while(solver_parameter.size() > 0){
-                auto p = *solver_parameter.begin();
-                kill(p.first, SIGKILL);
-                solver_parameter.erase(p.first);
+    std::cout << "Type quit to exit the parent process" << std::endl;
+    std::cout << "> " << std::flush;
+    for(int eventCount = 0; (eventCount = epoll_wait(epollFd, &event, 1, -1)) >= 0; eventCount = 0){
+        for(int i = 0; i < eventCount; ++i){
+            if(event.events & EPOLLIN){
+                std::string command;
+                std::cin >> command;
+                if(command == "quit"){
+                    // Clean child
+                    while(solver_parameter.size() > 0){
+                        auto p = *solver_parameter.begin();
+                        kill(p.first, SIGKILL);
+                        solver_parameter.erase(p.first);
+                    }
+                    std::cout << "Bye!" << std::endl;
+                    return 0;
+                }
+                std::cout << "> " << std::flush;
             }
-            std::cout << solver_parameter.size() << std::endl;
-            return 0;
         }
     }
     return 0;
