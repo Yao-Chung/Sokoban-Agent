@@ -14,25 +14,23 @@ static void printMap(const Map& map){
 
 int main(int argc, char* const argv[])
 {
-    std::string prefix, extension, mapPath, netPath, solutionPath;
-    if(argc < 3){
+    std::string prefix, extension, netPath, solutionPath;
+    if(argc < 2){
         std::cerr << "Usage: " << argv[0] << " <solution_file> [net_file] [dot_file_prefix]" << std::endl;
         return -1;
     }else{
-        mapPath = argv[1];
-        solutionPath = argv[2];
-        if(argc > 3){
-            netPath = argv[3];
+        solutionPath = argv[1];
+        if(argc > 2){
+            netPath = argv[2];
         }
-        if(argc > 4){
-            prefix = argv[4];
+        if(argc > 3){
+            prefix = argv[3];
             extension = ".dot";
         }
     }
     
-    std::ifstream fin(mapPath, std::ios::binary);
-    Map level = readMap(fin);
-    fin.close();
+    Map level = readMap(std::cin);
+    printMap(level);
 
     // Create solver
     Solver solver(level, netPath, prefix, extension);
