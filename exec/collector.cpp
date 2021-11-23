@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <fstream>
 #include <sstream>
+#include <cerrno>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/epoll.h>
@@ -46,14 +47,19 @@ static bool fifo_handler(int fifoFd, std::string &buffer, std::filesystem::path 
     // Read data & put into buffer
     char buf[256];
     ssize_t size = 0;
-    while ((size = read(fifoFd, buf, 256)) > 0){
-        buffer += std::string(buf, size);
-    }
-    // Handle error
-    if(size < 0){
-        perror("read");
-        return false;
-    }
+    do{
+        while ((size = read(fifoFd, buf, 256)) > 0){
+            buffer += std::string(buf, size);
+        }
+        // Handle error
+        if(size < 0){
+            if(errno == EAGAIN){
+                continue;
+            }
+            perror("read");
+            return false;
+        }
+    }while(size > 0);
     // Extract data from buffer
     std::vector< std::pair<std::string, std::string> > datas;
     while(buffer.size() > 8){
@@ -94,13 +100,6 @@ static bool fifo_handler(int fifoFd, std::string &buffer, std::filesystem::path 
             for(auto [map, policy]: solutions){
                 write_solution(filepath.string(), map, policy);
             }
-        }
-        // Clean map file
-        std::vector< std::pair<Map, std::vector<MoveDirection>> > solutions = clean_solutions(read_solutions(filename));
-        std::ofstream cleanOut(filename, std::ios::trunc);
-        cleanOut.close();
-        for(auto [map, policy]: solutions){
-            write_solution(filename, map, policy);
         }
     }
     return true;
