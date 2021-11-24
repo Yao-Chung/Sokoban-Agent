@@ -3,6 +3,7 @@
 #include <vector>
 #include <valarray>
 #include <filesystem>
+#include <iomanip>
 
 Net::Net():
     conv1(torch::nn::Conv2dOptions(4, 8, 5).stride(1)),
@@ -42,17 +43,20 @@ std::vector<Decimal> Trainer::suggest(const Map map){
     return result;
 }
 
-void Trainer::train(Map level, std::vector<MoveDirection> policy){
+bool Trainer::train(Map level, std::vector<MoveDirection> policy){
     // Add optimizer
     torch::optim::Adam optimizer = torch::optim::Adam(net.parameters(), torch::optim::AdamOptions(1e-3));
     // Training
-    Decimal lastAccuracy = 0.0;
-    for(size_t iter = 0; ; ++iter){
+    Decimal lastAcc = 0.0;
+    Decimal lastLoss = 0.0;
+    for(size_t iter = 0, stuck = 0; stuck < stuck_limit; ++iter){
         Decimal accuracy = 0.0;
+        Decimal avgLoss = 0.0;
         for(size_t epo = 0; epo < epoch; ++epo){
             int hitCount = 0;
             // Epoch
             Map map = level;
+            Decimal sumLoss = 0.0;
             for(MoveDirection dir: policy){
                 std::vector<Decimal> answerVec(4);
                 answerVec[dir] = 1.0;
@@ -60,6 +64,7 @@ void Trainer::train(Map level, std::vector<MoveDirection> policy){
                 torch::Tensor predict = net.forward(extract(map)).reshape({1, 4});
                 // Calculate loss
                 torch::Tensor loss = torch::nn::functional::cross_entropy(answer, predict);
+                sumLoss += *loss.data_ptr<Decimal>();
                 // update parameters
                 loss.backward();
                 optimizer.step();
@@ -78,15 +83,24 @@ void Trainer::train(Map level, std::vector<MoveDirection> policy){
             }
             // std::cout << "Hit: " << (Decimal) hitCount / (Decimal) policy.size() << std::endl;
             accuracy += (Decimal) hitCount / (Decimal) policy.size();
+            avgLoss += (Decimal) sumLoss / (Decimal) policy.size();
         }
         accuracy /= (Decimal) epoch;
-        std::cout << "[" << iter << "] Accuracy: " << accuracy << std::endl;
+        avgLoss /= (Decimal) epoch;
+        std::cout << "[" << iter << ":" << stuck << "] Accuracy: " << std::setprecision(6) << accuracy << ", Loss average: " << std::setprecision(20) << avgLoss  << std::endl;
         if(accuracy > threshold){
-            break;
+            return true;
         }else{
-            lastAccuracy = accuracy;
+            if((std::abs(lastAcc - accuracy) < acc_thresh) && (std::abs(lastLoss - avgLoss) < loss_thresh)){
+                stuck += 1;
+            }else{
+                stuck = 0;
+            }
+            lastLoss = avgLoss;
+            lastAcc = accuracy;
         }
     }
+    return false;
 }
 
 torch::Tensor Trainer::extract(const Map map){

@@ -2,6 +2,7 @@
 #include <vector>
 #include <filesystem>
 #include <time.h>
+#include <fstream>
 
 #include <defines.hpp>
 #include <Trainer.hpp>
@@ -12,7 +13,7 @@ int main(int argc, char const *argv[])
 {
     // Parse command-line arguments
     if(argc < 3){
-        std::cerr << "Usage: " << argv[0] << " <solution_file> <model_file> [--stream]" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <solution_file> <model_file> [--stream] [<hard_record_file>]" << std::endl;
         return -1;
     }
     std::string solution_path(argv[1]);
@@ -27,15 +28,23 @@ int main(int argc, char const *argv[])
         }
         while(true){
             // Pick maps in files
-            for(int i=1; i<=PICK_NUM; ++i){
+            for(int i = 1; i<=PICK_NUM; ++i){
                 // Randomly select the file index
                 int index = rand() % allFiles.size();
                 int flag = 1;
                 std::cerr << "===== " << i << "th: training with file " << allFiles[index] << " =====" << std::endl;
                 for(auto [map, policy]: read_solutions(allFiles[index])){
-                    std:: cerr << "====== accuracy of "  << flag << "th policy ======" << std::endl;
-                    trainer.train(map, policy);
-                    std:: cerr << "finish " << flag << "th policy" << std::endl;
+                    std:: cerr << "====== accuracy of "  << flag << "th solution ======" << std::endl;
+                    if(!trainer.train(map, policy)){
+                        std::cerr << "It's hard" << std::endl;
+                        if(argc > 4){
+                            std::ofstream hardOut(argv[4], std::ios::app);
+                            hardOut << allFiles[index] << std::endl;
+                            hardOut.close();
+                        }
+                    }
+                    std:: cerr << "finish " << flag << "th solution" << std::endl;
+                    flag += 1;
                 }
                 trainer.save();
             }
@@ -43,7 +52,9 @@ int main(int argc, char const *argv[])
     }else{
         // Single file mode
         for(auto [map, policy]: read_solutions(argv[1])){
-            trainer.train(map, policy);
+            if(!trainer.train(map, policy)){
+                std::cerr << "It's hard" << std::endl;
+            }
         }
         trainer.save();
     }

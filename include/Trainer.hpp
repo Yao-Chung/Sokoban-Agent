@@ -6,6 +6,9 @@
 #include <defines.hpp>
 #include <torch/torch.h>
 
+#define stuck_limit 50
+#define acc_thresh 1e-6
+#define loss_thresh 1e-20
 #define epoch 20
 #define threshold 0.7
 
@@ -20,7 +23,7 @@ class Trainer{
 public:
     Trainer(std::string filename);
     std::vector<Decimal> suggest(const Map map);
-    void train(Map level, std::vector<MoveDirection> policy);
+    bool train(Map level, std::vector<MoveDirection> policy); // true if accuracy > threshold
     void save();
 private:
     torch::Tensor extract(const Map map);
