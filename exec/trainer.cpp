@@ -45,6 +45,7 @@ int main(int argc, char const *argv[])
         for(auto [map, policy]: read_solutions(argv[1])){
             trainer.train(map, policy);
         }
+        trainer.save();
     }
     return 0;
 }
