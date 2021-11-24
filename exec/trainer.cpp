@@ -76,6 +76,7 @@ static bool fifo_handler(int epollFd, int fifoFd, std::string fifo, std::string 
     for(auto [map, policy]: solutions){
         trainer.train(map, policy);
     }
+    std::cout << "Training finished" << std::endl;
     return true;
 }
 

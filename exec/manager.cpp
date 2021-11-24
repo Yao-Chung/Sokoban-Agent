@@ -85,6 +85,16 @@ void handle_child(int nsig){
     char **argv = solver_parameter[child_pid];
     run_solver(argv);
 }
+
+static void clean(){
+    // Clean child
+    while(solver_parameter.size() > 0){
+        auto p = *solver_parameter.begin();
+        kill(p.first, SIGKILL);
+        solver_parameter.erase(p.first);
+    }
+}
+
 int main(int argc, char *argv[]){
     if(argc < 5){
         std::cerr << "Usage: " << argv[0] << "<map_file> <solver_file> <child_num> [solution_file]+ [net_file]" << std::endl;
@@ -101,8 +111,8 @@ int main(int argc, char *argv[]){
         solutionFiles.push_back(argv[4+i]);
     }
     std::string netFile("");
-    if(argc > 4+child_number){
-        netFile = argv[3+child_number];
+    if(argc > (4 + child_number)){
+        netFile = argv[4 + child_number];
     }
     // Initialize fp and startPos
     fp = std::ifstream(mapPath, std::ios::binary);
@@ -147,18 +157,13 @@ int main(int argc, char *argv[]){
     }
     std::cout << "Type quit to exit the parent process" << std::endl;
     std::cout << "> " << std::flush;
-    for(int eventCount = 0; (eventCount = epoll_wait(epollFd, &event, 1, -1)) >= 0; eventCount = 0){
+    for(int eventCount = 0; ((eventCount = epoll_wait(epollFd, &event, 1, -1)) >= 0) || (errno == EINTR); eventCount = 0){
         for(int i = 0; i < eventCount; ++i){
             if(event.events & EPOLLIN){
                 std::string command;
                 std::cin >> command;
                 if(command == "quit"){
-                    // Clean child
-                    while(solver_parameter.size() > 0){
-                        auto p = *solver_parameter.begin();
-                        kill(p.first, SIGKILL);
-                        solver_parameter.erase(p.first);
-                    }
+                    clean();
                     std::cout << "Bye!" << std::endl;
                     return 0;
                 }
@@ -166,5 +171,7 @@ int main(int argc, char *argv[]){
             }
         }
     }
+    perror("epoll_wait");
+    clean();
     return 0;
 }
