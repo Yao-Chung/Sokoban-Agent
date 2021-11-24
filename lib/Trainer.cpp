@@ -48,8 +48,9 @@ void Trainer::train(Map level, std::vector<MoveDirection> policy){
     // Training
     Decimal lastAccuracy = 0.0;
     for(size_t iter = 0; ; ++iter){
-        int hitCount = 0;
+        Decimal accuracy = 0.0;
         for(size_t epo = 0; epo < epoch; ++epo){
+            int hitCount = 0;
             // Epoch
             Map map = level;
             for(MoveDirection dir: policy){
@@ -69,17 +70,18 @@ void Trainer::train(Map level, std::vector<MoveDirection> policy){
             // Validate
             map = level;
             for(MoveDirection dir: policy){
-                torch::Tensor maxTensor = torch::argmax(net.forward(extract(map)));
-                int maxIndex = *maxTensor.data_ptr<long>();
-                if(maxIndex == dir){
+                Decimal predicted = net.forward(extract(map)).data_ptr<Decimal>()[dir];
+                if(predicted >= 0.25){
                     hitCount += 1;
                 }
                 map = move(map, dir, level);
             }
+            std::cout << "Hit: " << (Decimal) hitCount / (Decimal) policy.size() << std::endl;
+            accuracy += (Decimal) hitCount / (Decimal) policy.size();
         }
-        Decimal accuracy = (Decimal) hitCount / (Decimal) (epoch * policy.size());
+        accuracy /= (Decimal) epoch;
         std::cout << "[" << iter << "] Accuracy: " << accuracy << std::endl;
-        if(std::abs(lastAccuracy - accuracy) <= threshold){
+        if(accuracy > threshold){
             break;
         }else{
             lastAccuracy = accuracy;
