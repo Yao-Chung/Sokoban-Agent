@@ -6,10 +6,9 @@
 #include <defines.hpp>
 #include <torch/torch.h>
 
-#define stuck_limit 50
+#define stuck_limit 20
 #define acc_thresh 1e-6
-#define loss_thresh 1e-20
-#define epoch 20
+#define epoch 30
 #define threshold 0.7
 
 struct Net: torch::nn::Module{

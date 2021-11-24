@@ -24,7 +24,7 @@ int main(int argc, char const *argv[])
         // List all files in solution directory
         std::vector<std::string> allFiles;
         for(const auto & entry : std::filesystem::directory_iterator(solution_path)){
-            if(entry.filename().string()[0] != '.'){
+            if(entry.path().filename().string()[0] != '.'){
                 allFiles.push_back(entry.path().string());
             }
         }

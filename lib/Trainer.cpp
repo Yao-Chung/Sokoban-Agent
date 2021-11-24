@@ -6,9 +6,9 @@
 #include <iomanip>
 
 Net::Net():
-    conv1(torch::nn::Conv2dOptions(4, 8, 5).stride(1)),
-    conv2(torch::nn::Conv2dOptions(8, 16, 3).stride(1)),
-    fc1(torch::nn::LinearOptions(144, 64).bias(false)),
+    conv1(torch::nn::Conv2dOptions(4, 16, 5).stride(1)),
+    conv2(torch::nn::Conv2dOptions(16, 32, 3).stride(1)),
+    fc1(torch::nn::LinearOptions(288, 64).bias(false)),
     fc2(torch::nn::LinearOptions(64, 4).bias(false))
 {
     register_module("conv1", conv1);
@@ -56,17 +56,17 @@ bool Trainer::train(Map level, std::vector<MoveDirection> policy){
             Map map = level;
             Decimal sumLoss = 0.0;
             for(MoveDirection dir: policy){
+                optimizer.zero_grad();
                 std::vector<Decimal> answerVec(4);
                 answerVec[dir] = 1.0;
                 torch::Tensor answer = torch::tensor(answerVec).reshape({1, 4});
                 torch::Tensor predict = net.forward(extract(map)).reshape({1, 4});
                 // Calculate loss
-                torch::Tensor loss = torch::nn::functional::cross_entropy(answer, predict);
+                torch::Tensor loss = torch::nn::functional::mse_loss(answer, predict);
                 sumLoss += *loss.data_ptr<Decimal>();
                 // update parameters
                 loss.backward();
                 optimizer.step();
-                optimizer.zero_grad();
                 // Move to another state
                 map = move(map, dir, level);
             }
@@ -89,7 +89,7 @@ bool Trainer::train(Map level, std::vector<MoveDirection> policy){
         if(accuracy > threshold){
             return true;
         }else{
-            if((std::abs(lastAcc - accuracy) < acc_thresh) && (std::abs(lastLoss - avgLoss) < loss_thresh)){
+            if(std::abs(lastAcc - accuracy) < acc_thresh && (lastLoss == avgLoss)){
                 stuck += 1;
             }else{
                 stuck = 0;
