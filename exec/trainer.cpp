@@ -24,7 +24,7 @@ int main(int argc, char const *argv[])
         // List all files in solution directory
         std::vector<std::string> allFiles;
         for(const auto & entry : std::filesystem::directory_iterator(solution_path)){
-            if(entry.path().string()[0] != '.'){
+            if(entry.filename().string()[0] != '.'){
                 allFiles.push_back(entry.path().string());
             }
         }
@@ -46,7 +46,6 @@ int main(int argc, char const *argv[])
                             hardOut << allFiles[index] << std::endl;
                             hardOut.close();
                         }
-                        trainer.reload();
                     }
                     std:: cerr << "finish " << flag << "th solution" << std::endl;
                     flag += 1;
