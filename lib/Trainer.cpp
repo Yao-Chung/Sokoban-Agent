@@ -30,9 +30,7 @@ Trainer::Trainer(std::string filename):
     filename(filename)
 {
     if(std::filesystem::exists(filename)){
-        torch::serialize::InputArchive input;
-        input.load_from(filename);
-        net.load(input);
+        reload();
     }
 }
 
@@ -153,4 +151,10 @@ void Trainer::save(){
     torch::serialize::OutputArchive output;
     net.save(output);
     output.save_to(filename);
+}
+
+void Trainer::reload(){
+    torch::serialize::InputArchive input;
+    input.load_from(filename);
+    net.load(input);
 }

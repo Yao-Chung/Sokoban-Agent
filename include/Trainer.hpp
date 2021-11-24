@@ -24,6 +24,7 @@ public:
     Trainer(std::string filename);
     std::vector<Decimal> suggest(const Map map);
     bool train(Map level, std::vector<MoveDirection> policy); // true if accuracy > threshold
+    void reload();
     void save();
 private:
     torch::Tensor extract(const Map map);
