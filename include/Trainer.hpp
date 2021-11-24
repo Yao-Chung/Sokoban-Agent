@@ -7,7 +7,7 @@
 #include <torch/torch.h>
 
 #define epoch 20
-#define threshold 0.8
+#define threshold 0.7
 
 struct Net: torch::nn::Module{
     Net();

@@ -76,7 +76,7 @@ void Trainer::train(Map level, std::vector<MoveDirection> policy){
                 }
                 map = move(map, dir, level);
             }
-            std::cout << "Hit: " << (Decimal) hitCount / (Decimal) policy.size() << std::endl;
+            // std::cout << "Hit: " << (Decimal) hitCount / (Decimal) policy.size() << std::endl;
             accuracy += (Decimal) hitCount / (Decimal) policy.size();
         }
         accuracy /= (Decimal) epoch;
