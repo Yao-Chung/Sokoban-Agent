@@ -26,6 +26,7 @@ public:
     void reload();
     void save();
 private:
+    torch::Device device;
     torch::Tensor extract(const Map map);
     Net net;
     const std::string filename;

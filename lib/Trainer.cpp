@@ -27,11 +27,12 @@ torch::Tensor Net::forward(torch::Tensor input){
 }
 
 Trainer::Trainer(std::string filename):
-    filename(filename)
+    device(torch::kCUDA), filename(filename)
 {
     if(std::filesystem::exists(filename)){
         reload();
     }
+    net.to(device);
 }
 
 std::vector<Decimal> Trainer::suggest(const Map map){
@@ -59,11 +60,11 @@ bool Trainer::train(Map level, std::vector<MoveDirection> policy){
                 optimizer.zero_grad();
                 std::vector<Decimal> answerVec(4);
                 answerVec[dir] = 1.0;
-                torch::Tensor answer = torch::tensor(answerVec).reshape({1, 4});
+                torch::Tensor answer = torch::tensor(answerVec, device).reshape({1, 4});
                 torch::Tensor predict = net.forward(extract(map)).reshape({1, 4});
                 // Calculate loss
                 torch::Tensor loss = torch::nn::functional::mse_loss(answer, predict);
-                sumLoss += *loss.data_ptr<Decimal>();
+                sumLoss += *(loss.to(torch::kCPU).data_ptr<Decimal>());
                 // update parameters
                 loss.backward();
                 optimizer.step();
@@ -73,7 +74,7 @@ bool Trainer::train(Map level, std::vector<MoveDirection> policy){
             // Validate
             map = level;
             for(MoveDirection dir: policy){
-                Decimal predicted = net.forward(extract(map)).data_ptr<Decimal>()[dir];
+                Decimal predicted = net.forward(extract(map)).detach().to(torch::kCPU).data_ptr<Decimal>()[dir];
                 if(predicted >= 0.25){
                     hitCount += 1;
                 }
@@ -143,7 +144,7 @@ torch::Tensor Trainer::extract(const Map map){
     }
     // Convert to tensor
     return torch::tensor(
-        std::vector<Decimal>(std::begin(data.input1D), std::end(data.input1D)))
+        std::vector<Decimal>(std::begin(data.input1D), std::end(data.input1D)), device)
         .reshape({1, 4, 9, 9});
 }
 
