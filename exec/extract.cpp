@@ -13,7 +13,9 @@ int main(int argc, char* const argv[]){
     int32_t cols = 0;
     // Read raw text file line by line
     for(std::string line; std::getline(text_map_file, line);){
-        line.pop_back();
+        if(line.back() == '\r'){
+            line.pop_back();
+        }
         map.push_back(line);
         // Get the longest column number
         if(line.size() > cols){
