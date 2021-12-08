@@ -8,7 +8,7 @@ int main(int argc, char* const argv[]){
         return -1;
     }
     std::ifstream text_map_file(argv[1]);
-    std::ofstream binary_map_file(argv[2], std::ios::binary);
+    std::ofstream binary_map_file(argv[2], std::ios::binary | std::ios::app);
     std::vector<std::string> map;
     int32_t cols = 0;
     // Read raw text file line by line
