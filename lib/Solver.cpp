@@ -184,8 +184,7 @@ std::vector<MoveDirection> Solver::solve(){
                 << " b: " << beta 
                 << " r: " << gamma 
                 << " R: " << curState->restartCost
-                << " a/R: " << ((curState->restartCost > 0) ? (alpha / (Decimal)curState->restartCost) : 1)
-                << " b*T: " << beta * (Decimal)curState->finishTargets
+                << " T: " << curState->finishTargets
                 << std::endl; 
             maxIter += 1;
             // Visualize
