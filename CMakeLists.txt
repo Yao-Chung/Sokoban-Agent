@@ -15,10 +15,3 @@ include_directories(include)
 
 add_subdirectory(lib)
 add_subdirectory(exec)
-
-add_executable(example
-    example.cpp
-)
-target_link_libraries(example
-    ${TORCH_LIBRARIES}
-)
