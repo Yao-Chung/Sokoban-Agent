@@ -10,17 +10,20 @@
 #include <sys/epoll.h>
 #include <sys/wait.h>
 #include <cstring>
+#include <atomic>
 #include <unordered_map>
+#include <mutex>
 
-std::unordered_map<pid_t, char**> solver_parameter;
+std::mutex parameter_mutex;
+std::unordered_map<pid_t, std::vector<char*>> solver_parameter;
 std::ifstream fp;
 std::vector<int> startPos;
+std::atomic_int mapIndex = 0;
 
 // Return {rows, cols} and set file pointer to ready position
 std::string random_map(){
     // Get the random index of map
-    int total = startPos.size();
-    int index = rand() % total;
+    int index = mapIndex++;
     std::cout << "Map index: " << index << std::endl;
     // Point the file pointer to target map
     fp.seekg(startPos[index], std::ios_base::beg);
@@ -42,7 +45,7 @@ void get_start_pos(){
         fp.peek();
     }
 }
-void run_solver(char **argv){
+void run_solver(std::vector<char*> argv){
     // Get the random map for solver
     std::string returnMap = random_map();
     // Create pipe
@@ -58,6 +61,7 @@ void run_solver(char **argv){
     }
     else if(child_pid > 0){     // This is parent process
         // Write the map into pipe
+        const std::lock_guard<std::mutex> lock(parameter_mutex);
         solver_parameter[child_pid] = argv;
         close(fd[0]);
         write(fd[1], returnMap.data(), returnMap.size());
@@ -65,7 +69,7 @@ void run_solver(char **argv){
     }else{      // This is child process
         close(fd[1]);
         dup2(fd[0], 0);
-        execve(argv[0], argv, nullptr);
+        execve(argv[0], argv.data(), nullptr);
         exit(0);
     }
 }
@@ -82,8 +86,15 @@ void handle_child(int nsig){
         std::cout << "child was killed by a signal." << std::endl;
         return;
     }
-    char **argv = solver_parameter[child_pid];
-    run_solver(argv);
+    if(mapIndex < startPos.size()){
+        run_solver(solver_parameter[child_pid]);
+    }
+    const std::lock_guard<std::mutex> lock(parameter_mutex);
+    solver_parameter.erase(child_pid);
+    if(solver_parameter.size() == 0){
+        std::cerr << "Finished." << std::endl;
+        exit(0);
+    }
 }
 
 static void clean(){
@@ -153,7 +164,7 @@ int main(int argc, char *argv[]){
     
     for(int i=0; i<child_number; ++i){
         solver_args[1] = solutionFiles[i].data();
-        run_solver(solver_args.data());
+        run_solver(solver_args);
     }
     std::cout << "Type quit to exit the parent process" << std::endl;
     std::cout << "> " << std::flush;
