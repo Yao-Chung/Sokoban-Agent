@@ -32,6 +32,9 @@ target_link_libraries(collector
 add_executable(extract
     extract.cpp
 )
+target_link_libraries(extract
+    sokoban-agent
+)
 
 add_executable(manager
     manager.cpp

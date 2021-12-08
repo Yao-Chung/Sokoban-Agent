@@ -1,14 +1,18 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <functional>
+
+#include <defines.hpp>
 
 int main(int argc, char* const argv[]){
-    if(argc != 3){
-        std::cerr << "Usage: " << argv[0] << " <text_map_file> <binary_map_file>" << std::endl;
+    if(argc != 4){
+        std::cerr << "Usage: " << argv[0] << " <text_map_file> <binary_map_file> <index_file>" << std::endl;
         return -1;
     }
     std::ifstream text_map_file(argv[1]);
     std::ofstream binary_map_file(argv[2], std::ios::binary | std::ios::app);
+    std::ofstream index_file(argv[3], std::ios::app);
     std::vector<std::string> map;
     int32_t cols = 0;
     // Read raw text file line by line
@@ -64,6 +68,11 @@ int main(int argc, char* const argv[]){
         row += std::string(cols - row.size(), '#');
         binary_map_file.write(row.c_str(), sizeof(char) * row.size());
     }
+    
+    // Write index
+    index_file << argv[1] << " : " << std::hex << std::hash<std::string>{}(getKey(map)) << std::endl;
+    // Clean
     binary_map_file.close();
+    index_file.close();
     return 0;
 }
