@@ -56,6 +56,7 @@ std::vector<MoveDirection> Solver::solve(){
     states[curState->key] = curState;
     // Visualize
     visualize(0, curState, map);
+    unsigned int lastFinished = 0;
     for(unsigned int iteration=1; ; ++iteration){
         // Check fresh state
         if(curState->childs.empty()){
@@ -185,11 +186,21 @@ std::vector<MoveDirection> Solver::solve(){
                 << " r: " << gamma 
                 << " R: " << curState->restartCost
                 << " T: " << curState->finishTargets
-                << std::endl; 
+                << std::endl;
             maxIter += 1;
             // Visualize
             visualize(0, curState, map);
             curState = restart(map, iteration, curState);
+        }else if(curState->finishTargets > lastFinished){
+            // Print if finishedTargets differ
+            std::cerr << "MaxIter: " << maxIter << " Restart: " << restartCount
+                << " a: " << alpha
+                << " b: " << beta 
+                << " r: " << gamma 
+                << " R: " << curState->restartCost
+                << " T: " << curState->finishTargets
+                << std::endl;
+            lastFinished = curState->finishTargets;
         }
     }
 }
