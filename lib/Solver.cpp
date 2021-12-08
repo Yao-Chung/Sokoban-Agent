@@ -179,7 +179,6 @@ std::vector<MoveDirection> Solver::solve(){
             // Update alpha, beta, maxIter
             alpha = (Decimal)std::sqrt(restartCount + 1);
             beta = ((curState->finishTargets == 0) ? 1 : ((Decimal)maxIter / (Decimal)curState->finishTargets)) + (Decimal)boxMoveCount / (Decimal)maxIter;
-            maxIter += 1;
             std::cerr << "MaxIter: " << maxIter << " Restart: " << restartCount
                 << " a: " << alpha
                 << " b: " << beta 
@@ -188,6 +187,7 @@ std::vector<MoveDirection> Solver::solve(){
                 << " a/R: " << ((curState->restartCost > 0) ? (alpha / (Decimal)curState->restartCost) : 1)
                 << " b*T: " << beta * (Decimal)curState->finishTargets
                 << std::endl; 
+            maxIter += 1;
             // Visualize
             visualize(0, curState, map);
             curState = restart(map, iteration, curState);
