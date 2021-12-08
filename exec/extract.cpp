@@ -8,12 +8,12 @@ int main(int argc, char* const argv[]){
         return -1;
     }
     std::ifstream text_map_file(argv[1]);
-    std::FILE* binary_map_file = std::fopen(argv[2], "ab");
-    std::string line;
+    std::ofstream binary_map_file(argv[2], std::ios::binary);
     std::vector<std::string> map;
     int32_t cols = 0;
     // Read raw text file line by line
-    while(std::getline(text_map_file, line)){
+    for(std::string line; std::getline(text_map_file, line);){
+        line.pop_back();
         map.push_back(line);
         // Get the longest column number
         if(line.size() > cols){
@@ -23,33 +23,45 @@ int main(int argc, char* const argv[]){
     text_map_file.close();
     // Get row number of map
     int32_t rows = map.size();
+
     // Write row number and col number to binary_file
-    // fwrite(&rows, sizeof(int32_t), 1, fp);
-    // fwrite(&cols, sizeof(int32_t), 1, fp);
+    binary_map_file.write((char*)&rows, sizeof(int32_t));
+    binary_map_file.write((char*)&cols, sizeof(int32_t));
+
+    // Fill vertical
+    for(int c = 0; c < cols; ++c){
+        // Fill top
+        for(int r = 0; r < rows; ++r){
+            if(map[r].size() > c){
+                if(map[r][c] != '#'){
+                    map[r][c] = '#';
+                }else{
+                    break;
+                }
+            }
+        }
+        // Fill bottom
+        for(int r = (rows - 1); r >= 0; --r){
+            if(map[r].size() > c){
+                if(map[r][c] != '#'){
+                    map[r][c] = '#';
+                }else{
+                    break;
+                }
+            }
+        }
+    }
+    // Fill horizontal & write
     for(std::string &row: map){
-        for(int i=0; i<row.size(); i++){
-            if(row[i] != ' '){
+        for(int i = 0; i < row.size(); ++i){
+            if(row[i] == '#'){
                 break;
             }
             row[i] = '#';
         }
-        row += string(cols - row.size(), '#');
+        row += std::string(cols - row.size(), '#');
+        binary_map_file.write(row.c_str(), sizeof(char) * row.size());
     }
-    for(auto s: map){
-        fwrite(s.c_str(), sizeof(char), s.size(), binary_map_file);
-    }
-    //     // Read "\n" or "; id"
-    //     else if(!map.empty()){
-    //         int32_t rows = map.size();
-    //         int32_t cols = map[0].size();
-    //         fwrite(&rows, sizeof(int32_t), 1, fp);
-    //         fwrite(&cols, sizeof(int32_t), 1, fp);
-    //         for(auto s: map){
-    //             fwrite(s.c_str(), sizeof(char), s.size(), fp);
-    //         }
-    //         map.clear();
-    //     }
-    // }
-    fclose(binary_map_file);
+    binary_map_file.close();
     return 0;
 }
