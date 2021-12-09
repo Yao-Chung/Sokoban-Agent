@@ -7,8 +7,6 @@
 #include <defines.hpp>
 #include <Trainer.hpp>
 
-#define PICK_NUM 5
-
 int main(int argc, char const *argv[])
 {
     // Parse command-line arguments
@@ -29,12 +27,9 @@ int main(int argc, char const *argv[])
             }
         }
         while(true){
-            // Pick maps in files
-            for(int i = 1; i <= PICK_NUM; ++i){
-                // Randomly select the file index
-                int index = rand() % allFiles.size();
+            for(int index = 0; index < allFiles.size(); ++index){
                 int flag = 1;
-                std::cerr << "===== " << i << "th: training with file " << allFiles[index] << " =====" << std::endl;
+                std::cerr << "===== " << index << "th: training with file " << allFiles[index] << " =====" << std::endl;
                 for(auto [map, policy]: read_solutions(allFiles[index])){
                     std:: cerr << "====== accuracy of "  << flag << "th solution ======" << std::endl;
                     if(trainer.train(map, policy)){

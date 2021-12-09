@@ -56,7 +56,7 @@ std::vector<MoveDirection> Solver::solve(){
     states[curState->key] = curState;
     // Visualize
     visualize(0, curState, map);
-    unsigned int lastFinished = 0;
+    unsigned int maxFinished = 0;
     for(unsigned int iteration=1; ; ++iteration){
         // Check fresh state
         if(curState->childs.empty()){
@@ -131,6 +131,19 @@ std::vector<MoveDirection> Solver::solve(){
             if(curState->childs.empty()){
                 Decimal sugSum = 0;
                 size_t count = 0;
+                // Print if finishedTargets differ
+                if(curState->finishTargets >= maxFinished){
+                    std::cerr << "MaxIter: " << maxIter << " Restart: " << restartCount
+                        << " a: " << alpha
+                        << " b: " << beta 
+                        << " r: " << gamma 
+                        << " R: " << curState->restartCost
+                        << " T: " << curState->finishTargets
+                        << " States: " << states.size()
+                        << std::endl;
+                    printMap(map);
+                    maxFinished = curState->finishTargets;
+                }
                 // Clean dead nodes
                 while (curState->childs.empty()){
                     if(curState->parent == nullptr){
@@ -186,21 +199,12 @@ std::vector<MoveDirection> Solver::solve(){
                 << " r: " << gamma 
                 << " R: " << curState->restartCost
                 << " T: " << curState->finishTargets
+                << " States: " << states.size()
                 << std::endl;
             maxIter += 1;
             // Visualize
             visualize(0, curState, map);
             curState = restart(map, iteration, curState);
-        }else if(curState->finishTargets > lastFinished){
-            // Print if finishedTargets differ
-            std::cerr << "MaxIter: " << maxIter << " Restart: " << restartCount
-                << " a: " << alpha
-                << " b: " << beta 
-                << " r: " << gamma 
-                << " R: " << curState->restartCost
-                << " T: " << curState->finishTargets
-                << std::endl;
-            lastFinished = curState->finishTargets;
         }
     }
 }
@@ -227,10 +231,13 @@ bool Solver::isWin(const Map& map){
 }
 
 Decimal Solver::confidence(const State* const state){
-    // a / R + b * T
-    Decimal result = (state->restartCost > 0) ? (alpha / (Decimal) state->restartCost) : 1;
+    // (a + (b * T)) / R 
+    Decimal result = alpha; 
     if(state->finishTargets > 0){
         result += beta * (Decimal)state->finishTargets;
+    }
+    if(state->restartCost > 0){
+        result /= (Decimal) state->restartCost;
     }
     return result;
 }
@@ -264,11 +271,16 @@ MoveDirection Solver::decide(const State* const state, const Map map){
     }
     // Generate random float number between 0 to 1
     Decimal choice = std::generate_canonical<Decimal, sizeof(Decimal) * 8>(random_generator);
+    bool isRandom = std::generate_canonical<Decimal, sizeof(Decimal) * 8>(random_generator) > RANDOM_RATE;
     // Make decision 
     for(auto [conf, dir]: possibilities){
-        choice -= (1 - gamma) * (conf / sum);
-        if(trainer.has_value()){
-            choice -= gamma * (suggestions[dir] / expert_sum);
+        if(isRandom){
+            choice -= ((Decimal)1.0 / possibilities.size());
+        }else{
+            choice -= ((Decimal)1.0 - gamma) * (conf / sum);
+            if(trainer.has_value()){
+                choice -= gamma * (suggestions[dir] / expert_sum);
+            }
         }
         if(choice <= 0){
             return dir;

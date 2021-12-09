@@ -12,6 +12,8 @@
 #include <State.hpp>
 #include <Trainer.hpp>
 
+#define RANDOM_RATE 0.25
+
 class Solver{
 public:
     Solver(const Map level, std::string cnnPath = "", std::string prefix = "", std::string extension = "");
